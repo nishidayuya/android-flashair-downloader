@@ -309,7 +309,7 @@ SDK バージョン:
 `:core:network` / `:core:data` / `:feature:*` に切り出す。
 
 ```
-jp.netlab.flashairdownloader
+org.j96.flashairdownloader
 ├── di/                      Hilt モジュール
 ├── net/
 │   ├── FlashAirNetworkProvider.kt   NetworkCallback、StateFlow<Network?>
