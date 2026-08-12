@@ -149,7 +149,7 @@ GET http://192.168.0.1/thumbnail.cgi?/DCIM/100__TSB/IMG_0001.JPG
 
 ### 3.1 【最重要】インターネットに出られない Wi-Fi へのルーティング
 
-Android 5.0 以降、インターネット到達性のない Wi-Fi に繋いでいても、
+インターネット到達性のない Wi-Fi に繋いでいても、
 アプリの通信は既定でモバイル回線に流れる。FlashAir はインターネットに出られないため、
 **何もしないと `192.168.0.1` への通信がモバイル回線に投げられて失敗する。**
 
@@ -188,9 +188,9 @@ DNS も `Network` 経由にしないと名前解決だけモバイル回線に�
 `FlashAirNetworkProvider` が `StateFlow<Network?>` を公開し、
 `OkHttpClient` はその都度生成（コネクションプールは使い捨て）する構成にする。
 
-### 3.2 平文 HTTP の許可（Android 9+）
+### 3.2 平文 HTTP の許可
 
-Android 9 以降は平文 HTTP が既定で禁止される。`res/xml/network_security_config.xml`:
+平文 HTTP は既定で禁止される。`res/xml/network_security_config.xml`:
 
 ```xml
 <network-security-config>
@@ -210,17 +210,20 @@ Android 9 以降は平文 HTTP が既定で禁止される。`res/xml/network_se
 
 設定画面でホストを変更できるようにする場合は後者に切り替える。この判断は Phase 5 で行う。
 
-### 3.3 Wi-Fi への接続方法（OS バージョン差）
+### 3.3 Wi-Fi への接続方法
 
-| OS | 手段 |
-|----|------|
-| Android 9 以下 | `WifiManager.addNetwork()` / `enableNetwork()`（現在は非推奨） |
-| Android 10+ | `WifiNetworkSpecifier` によるアプリ専用接続（システム UI でユーザーが承認） |
-| Android 11+ | `Settings.Panel.ACTION_WIFI` で Wi-Fi パネルを表示 |
-| Android 12+ | ローカルオンリー接続をセカンダリ接続として張れる（モバイル回線を維持できる） |
+手段は 2 つ。
+
+| 手段 | 内容 |
+|------|------|
+| `Settings.Panel.ACTION_WIFI` | Wi-Fi パネルを表示し、ユーザーに手動接続してもらう |
+| `WifiNetworkSpecifier` | アプリ専用のローカルオンリー接続（システム UI でユーザーが承認） |
 
 `WifiNetworkSpecifier` は「インターネットなしのローカル専用ネットワーク」に接続する
-正規の手段で、まさに FlashAir 向き。ただし OS のダイアログを経由する UX になる。
+正規の手段で、まさに FlashAir 向き。ローカルオンリー接続はセカンダリ接続として張られるため、
+モバイル回線を維持したまま FlashAir と通信できる。ただし OS のダイアログを経由する UX になる。
+
+`WifiManager.addNetwork()` / `enableNetwork()` による直接接続は使えない（廃止済み）。
 
 **方針:**
 - Phase 1〜5: **ユーザーが OS 設定で手動接続**する前提。アプリは 3.1 のバインドのみ行う。
@@ -250,8 +253,8 @@ SSID をスキャンして表示する機能を付けるなら `ACCESS_FINE_LOCA
 大量ファイルのダウンロードは数分〜数十分かかる。画面オフでも継続させる。
 
 - **フォアグラウンドサービス**（`foregroundServiceType="dataSync"`）で実行する
-  - Android 14+ では `FOREGROUND_SERVICE_DATA_SYNC` 権限の宣言が必須
-  - Android 13+ では通知表示に `POST_NOTIFICATIONS` の実行時許可が必要
+  - `FOREGROUND_SERVICE_DATA_SYNC` 権限の宣言が必須
+  - 通知表示に `POST_NOTIFICATIONS` の実行時許可が必要
 - WorkManager は採用しない。ネットワークのバインド状態と密結合で、
   OS 都合の再スケジュールと相性が悪いため
 - Wi-Fi が切れたら即座に一時停止し、`onAvailable` で再開する
@@ -292,8 +295,11 @@ SSID をスキャンして表示する機能を付けるなら `ACCESS_FINE_LOCA
 
 SDK バージョン:
 
-- `minSdk = 26`（Android 8.0）— `java.time` と Compose の現実的な下限
-- `targetSdk` / `compileSdk = 36`（Android 16）
+- `minSdk` / `targetSdk` / `compileSdk = 36`（Android 16）
+
+**Android 16 のみを対象とする。** OS バージョン差の分岐（`Build.VERSION.SDK_INT` による
+`if` 分岐、非推奨 API のフォールバック、`desugaring`）を一切書かなくてよくなり、
+3 章の各対策はすべて単一の実装で済む。その代わり対応端末は Android 16 搭載機に限られる。
 
 ---
 
