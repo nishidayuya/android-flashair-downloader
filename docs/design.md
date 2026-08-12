@@ -297,9 +297,9 @@ SDK バージョン:
 
 - `minSdk` / `targetSdk` / `compileSdk = 36`（Android 16）
 
-**Android 16 のみを対象とする。** OS バージョン差の分岐（`Build.VERSION.SDK_INT` による
+**対象は Android 16 以降とする。** 下位バージョン向けの分岐（`Build.VERSION.SDK_INT` による
 `if` 分岐、非推奨 API のフォールバック、`desugaring`）を一切書かなくてよくなり、
-3 章の各対策はすべて単一の実装で済む。その代わり対応端末は Android 16 搭載機に限られる。
+3 章の各対策はすべて単一の実装で済む。その代わり対応端末は Android 16 以降の搭載機に限られる。
 
 ---
 
