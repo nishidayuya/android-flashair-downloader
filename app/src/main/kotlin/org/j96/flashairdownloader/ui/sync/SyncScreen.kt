@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -111,7 +112,7 @@ private fun ProgressBar(progress: SyncProgress) {
 private fun Counters(progress: SyncProgress) {
     val context = LocalContext.current
     if (progress.state == SyncProgress.State.SCANNING) {
-        Text(stringResource(R.string.sync_scanning_count, progress.scannedFiles))
+        Text(pluralStringResource(R.plurals.sync_scanning_count, progress.scannedFiles, progress.scannedFiles))
         progress.scannedDirectory?.let {
             Text(text = it, maxLines = 1, overflow = TextOverflow.MiddleEllipsis)
         }
@@ -129,6 +130,9 @@ private fun Counters(progress: SyncProgress) {
     )
     if (progress.state == SyncProgress.State.DOWNLOADING) {
         Text(stringResource(R.string.sync_speed, Formatter.formatFileSize(context, progress.bytesPerSecond)))
+    }
+    if (progress.alreadyPresentFiles > 0) {
+        Text(stringResource(R.string.sync_already_present, progress.alreadyPresentFiles))
     }
     if (progress.unchangedFiles > 0) {
         Text(stringResource(R.string.sync_unchanged, progress.unchangedFiles))
@@ -168,7 +172,11 @@ private fun headline(progress: SyncProgress): String = when (progress.state) {
             ?: stringResource(R.string.sync_result_failed)
 
     SyncProgress.State.FINISHED -> if (progress.failures.isEmpty()) {
-        stringResource(R.string.sync_result_done, progress.completedFiles)
+        pluralStringResource(
+            R.plurals.sync_result_done,
+            progress.completedFiles,
+            progress.completedFiles,
+        )
     } else {
         stringResource(R.string.sync_result_partial, progress.completedFiles, progress.failures.size)
     }

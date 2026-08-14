@@ -56,6 +56,9 @@ class SettingsDataStore @Inject constructor(
             .coerceIn(1, MAX_PARALLEL_DOWNLOADS)
     }
 
+    /** The card talked to most recently, so history works while it is away. */
+    val lastCardId: Flow<String?> = data.map { it[KEY_LAST_CARD_ID]?.takeIf(String::isNotBlank) }
+
     /** Whether saved photos and videos are also registered with MediaStore. */
     val registerInMediaStore: Flow<Boolean> = data.map { it[KEY_REGISTER_IN_MEDIA_STORE] ?: false }
 
@@ -72,6 +75,8 @@ class SettingsDataStore @Inject constructor(
     suspend fun setMaxParallelDownloads(count: Int) = edit {
         it[KEY_MAX_PARALLEL_DOWNLOADS] = count.coerceIn(1, MAX_PARALLEL_DOWNLOADS)
     }
+
+    suspend fun setLastCardId(cardId: String) = edit { it[KEY_LAST_CARD_ID] = cardId }
 
     suspend fun setRegisterInMediaStore(enabled: Boolean) = edit { it[KEY_REGISTER_IN_MEDIA_STORE] = enabled }
 
@@ -93,5 +98,6 @@ class SettingsDataStore @Inject constructor(
         private val KEY_EXTENSION_FILTER = stringPreferencesKey("extension_filter")
         private val KEY_MAX_PARALLEL_DOWNLOADS = intPreferencesKey("max_parallel_downloads")
         private val KEY_REGISTER_IN_MEDIA_STORE = booleanPreferencesKey("register_in_media_store")
+        private val KEY_LAST_CARD_ID = stringPreferencesKey("last_card_id")
     }
 }

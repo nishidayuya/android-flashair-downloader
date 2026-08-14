@@ -9,6 +9,17 @@ TOSHIBA FlashAir（無線 LAN 内蔵 SD カード）から HTTP 経由でファ�
 
 - Android 16（API 36）以降
 
+## できること
+
+- FlashAir の Wi-Fi（インターネットに出られない Wi-Fi）に接続していれば、
+  カード情報（SSID / ファームウェア / 空き容量）を表示する
+- カード内のフォルダーを辿って一覧・サムネイル表示する
+- 前回以降に増えたファイルだけを保存先（SAF で選んだフォルダー）へ
+  ダウンロードする。画面を消しても継続する
+- 設定: カードのアドレス、カード内の起点フォルダー、保存先、拡張子フィルター、
+  同時ダウンロード数、ギャラリー登録
+- 履歴: ダウンロード済み一覧、直近の失敗一覧、記録のリセット
+
 ## 開発環境
 
 `.devcontainer` に JDK 21 と Android SDK が入っている。VS Code の
@@ -58,6 +69,9 @@ adb shell am start -n org.j96.flashairdownloader.debug/org.j96.flashairdownloade
 ```sh
 ruby tools/flashair-stub.rb --root tools/fixtures/card --port 8080 &
 ```
+
+`--throttle 300000` を付けると転送を遅くできる（キャンセルや再接続の確認用）。
+`--ranges` を付けると Range リクエストに 206 で答える（既定は実機同様に無視）。
 
 エミュレーターからは、ホストが `10.0.2.2` に見える。アプリが接続するのは
 `192.168.0.1`（平文 HTTP を許可しているのはこのアドレスだけ）なので、

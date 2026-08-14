@@ -10,6 +10,9 @@ data class SyncProgress(
     val state: State = State.IDLE,
     val totalFiles: Int = 0,
     val completedFiles: Int = 0,
+    /** Files the plan asked for that turned out to be in the destination already. */
+    val alreadyPresentFiles: Int = 0,
+    /** Files the card has that the plan left out because they were downloaded before. */
     val unchangedFiles: Int = 0,
     val totalBytes: Long = 0,
     val transferredBytes: Long = 0,

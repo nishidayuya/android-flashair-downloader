@@ -134,6 +134,7 @@ class SyncController @Inject constructor(
             it.copy(
                 state = SyncProgress.State.FINISHED,
                 completedFiles = result.downloaded + result.alreadyPresent,
+                alreadyPresentFiles = result.alreadyPresent,
                 failures = result.failures,
                 currentFile = null,
             )
@@ -157,8 +158,11 @@ class SyncController @Inject constructor(
                 is DownloadFilesUseCase.Event.Transferred ->
                     current.withTransferred(event.bytes)
 
-                is DownloadFilesUseCase.Event.Finished ->
-                    current.copy(completedFiles = current.completedFiles + 1)
+                is DownloadFilesUseCase.Event.Finished -> current.copy(
+                    completedFiles = current.completedFiles + 1,
+                    alreadyPresentFiles = current.alreadyPresentFiles +
+                        if (event.alreadyPresent) 1 else 0,
+                )
 
                 is DownloadFilesUseCase.Event.Failed ->
                     current.copy(

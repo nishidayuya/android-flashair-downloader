@@ -16,10 +16,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -46,6 +51,8 @@ import org.j96.flashairdownloader.ui.theme.FlashAirDownloaderTheme
 fun HomeRoute(
     onBrowseClick: () -> Unit,
     onSyncStarted: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -82,6 +89,8 @@ fun HomeRoute(
         // the card's SSID in the system panel (docs/design.md 3.3).
         onOpenWifiSettings = { context.startActivity(Intent(Settings.Panel.ACTION_WIFI)) },
         onBrowseClick = onBrowseClick,
+        onSettingsClick = onSettingsClick,
+        onHistoryClick = onHistoryClick,
         onChooseDestination = {
             // Every stock Android build ships a document picker, but a stripped
             // down one may not, and that must not take the app down with it.
@@ -102,11 +111,31 @@ fun HomeScreen(
     onRetry: () -> Unit,
     onOpenWifiSettings: () -> Unit,
     onBrowseClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onHistoryClick: () -> Unit,
     onChooseDestination: () -> Unit,
     onStartSync: () -> Unit,
 ) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = {
+                    IconButton(onClick = onHistoryClick) {
+                        Icon(
+                            imageVector = Icons.Filled.History,
+                            contentDescription = stringResource(R.string.history_title),
+                        )
+                    }
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.settings_title),
+                        )
+                    }
+                },
+            )
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -286,6 +315,8 @@ private fun HomeScreenConnectedPreview() {
             onRetry = {},
             onOpenWifiSettings = {},
             onBrowseClick = {},
+            onSettingsClick = {},
+            onHistoryClick = {},
             onChooseDestination = {},
             onStartSync = {},
         )
@@ -301,6 +332,8 @@ private fun HomeScreenDisconnectedPreview() {
             onRetry = {},
             onOpenWifiSettings = {},
             onBrowseClick = {},
+            onSettingsClick = {},
+            onHistoryClick = {},
             onChooseDestination = {},
             onStartSync = {},
         )

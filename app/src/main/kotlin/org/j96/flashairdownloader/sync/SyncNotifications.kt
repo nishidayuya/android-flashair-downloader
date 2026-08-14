@@ -52,7 +52,13 @@ class SyncNotifications @Inject constructor(
             )
         when (progress.state) {
             SyncProgress.State.SCANNING -> {
-                builder.setContentText(context.getString(R.string.sync_scanning_count, progress.scannedFiles))
+                builder.setContentText(
+                    context.resources.getQuantityString(
+                        R.plurals.sync_scanning_count,
+                        progress.scannedFiles,
+                        progress.scannedFiles,
+                    ),
+                )
                 builder.setIndeterminateProgress()
             }
 
@@ -86,7 +92,11 @@ class SyncNotifications @Inject constructor(
                 progress.completedFiles,
                 progress.failures.size,
             )
-            else -> context.getString(R.string.sync_result_done, progress.completedFiles)
+            else -> context.resources.getQuantityString(
+                R.plurals.sync_result_done,
+                progress.completedFiles,
+                progress.completedFiles,
+            )
         }
         manager?.notify(
             RESULT_NOTIFICATION_ID,

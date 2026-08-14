@@ -32,6 +32,7 @@ import javax.inject.Singleton
 class SafFileStore @Inject constructor(
     @ApplicationContext private val context: Context,
     private val settings: SettingsDataStore,
+    private val mediaStoreRegistrar: MediaStoreRegistrar,
 ) : DownloadStore {
     override suspend fun openSession(): DownloadSession? {
         val treeUri = settings.destinationTreeUri.first()?.toUri() ?: return null
@@ -42,7 +43,14 @@ class SafFileStore @Inject constructor(
         }
         if (!granted) return null
         val rootDocumentId = DocumentsContract.getTreeDocumentId(treeUri) ?: return null
-        return SafSession(context.contentResolver, treeUri, rootDocumentId)
+        return SafSession(
+            resolver = context.contentResolver,
+            treeUri = treeUri,
+            rootDocumentId = rootDocumentId,
+            // Opt in, because since Android 10 the media provider indexes shared
+            // storage by itself; this only makes it happen right away.
+            mediaStoreRegistrar = mediaStoreRegistrar.takeIf { settings.registerInMediaStore.first() },
+        )
     }
 
     private fun String.toUri(): Uri? = runCatching { Uri.parse(this) }.getOrNull()
@@ -55,6 +63,7 @@ private class SafSession(
     private val resolver: ContentResolver,
     private val treeUri: Uri,
     private val rootDocumentId: String,
+    private val mediaStoreRegistrar: MediaStoreRegistrar?,
 ) : DownloadSession {
     /** Document id per directory path relative to the tree root ("" is the root). */
     private val directoryIds = mutableMapOf("" to rootDocumentId)
@@ -102,6 +111,7 @@ private class SafSession(
 
         childrenOf(directory, directoryId)[name] =
             Child(name = name, uri = finalUri, size = documentSize(finalUri), isDirectory = false)
+        mediaStoreRegistrar?.register(finalUri)
         finalUri.toString()
     }
 

@@ -2,6 +2,7 @@ package org.j96.flashairdownloader.domain.usecase
 
 import org.j96.flashairdownloader.data.flashair.FlashAirApi
 import org.j96.flashairdownloader.data.flashair.FlashAirHttpException
+import org.j96.flashairdownloader.data.local.SettingsDataStore
 import org.j96.flashairdownloader.domain.model.CardInfo
 import javax.inject.Inject
 
@@ -14,6 +15,7 @@ import javax.inject.Inject
  */
 class ProbeCardUseCase @Inject constructor(
     private val api: FlashAirApi,
+    private val settings: SettingsDataStore,
 ) {
     suspend operator fun invoke(): CardInfo {
         val firmwareVersion = api.firmwareVersion()
@@ -26,6 +28,9 @@ class ProbeCardUseCase @Inject constructor(
         } catch (_: FlashAirHttpException) {
             null
         }
+        // Remembered so that the history and the last sync time can be shown
+        // when the card is not around.
+        settings.setLastCardId(id ?: ssid)
         return CardInfo(
             id = id ?: ssid,
             ssid = ssid,
