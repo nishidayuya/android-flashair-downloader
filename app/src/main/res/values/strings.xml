@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FlashAir Downloader</string>
+    <string name="app_name" translatable="false">FlashAir Downloader</string>
+
+    <string name="home_disconnected">Connect to the FlashAir\'s Wi-Fi network to get started.</string>
+    <string name="home_open_wifi_settings">Open Wi-Fi settings</string>
+    <string name="home_probing">Contacting the card…</string>
+    <string name="home_connected">Connected</string>
+    <string name="home_retry">Retry</string>
+
+    <string name="card_ssid">SSID</string>
+    <string name="card_firmware_version">Firmware</string>
+    <string name="card_free_space">Free space</string>
+    <string name="card_free_space_value">%1$s of %2$s</string>
+    <string name="value_unknown">Unknown</string>
+
+    <string name="error_not_connected">Connect to the FlashAir\'s Wi-Fi network.</string>
+    <string name="error_unreachable">The card did not answer. Check the host in the settings.</string>
+    <string name="error_card">The card reported an error.</string>
+    <string name="error_storage">Writing to the destination folder failed.</string>
+    <string name="error_unknown">Something went wrong.</string>
 </resources>

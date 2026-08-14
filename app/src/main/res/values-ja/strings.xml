@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_disconnected">FlashAir の Wi-Fi に接続してください。</string>
+    <string name="home_open_wifi_settings">Wi-Fi 設定を開く</string>
+    <string name="home_probing">カードに問い合わせています…</string>
+    <string name="home_connected">接続済み</string>
+    <string name="home_retry">再試行</string>
+
+    <string name="card_ssid">SSID</string>
+    <string name="card_firmware_version">ファームウェア</string>
+    <string name="card_free_space">空き容量</string>
+    <string name="card_free_space_value">%1$s / %2$s</string>
+    <string name="value_unknown">不明</string>
+
+    <string name="error_not_connected">FlashAir の Wi-Fi に接続してください。</string>
+    <string name="error_unreachable">カードから応答がありません。設定のホストを確認してください。</string>
+    <string name="error_card">カードがエラーを返しました。</string>
+    <string name="error_storage">保存先への書き込みに失敗しました。</string>
+    <string name="error_unknown">エラーが発生しました。</string>
+</resources>

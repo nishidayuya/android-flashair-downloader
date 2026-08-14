@@ -46,6 +46,13 @@ android {
     buildFeatures {
         compose = true
     }
+
+    lint {
+        // targetSdk deliberately stays at the designed Android 16 even though
+        // compileSdk is a platform ahead (docs/design.md 4, README).
+        disable += "OldTargetApi"
+        abortOnError = true
+    }
 }
 
 kotlin {
@@ -66,6 +73,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(platform(libs.compose.bom))

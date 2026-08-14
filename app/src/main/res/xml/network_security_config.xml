@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FlashAir speaks plain HTTP only, and Android forbids that by default. Cleartext
+  is therefore allowed for the card's factory address and host names, and stays
+  forbidden everywhere else.
+
+  This list is fixed at build time, so a user-configured host would not be able
+  to use cleartext. See docs/design.md 3.2 for the trade-off; the alternative
+  (allow cleartext everywhere, and rely on the traffic being pinned to the
+  card's network) is a Phase 5 decision.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">flashair</domain>
+        <domain includeSubdomains="true">flashair.local</domain>
+        <domain includeSubdomains="false">192.168.0.1</domain>
+    </domain-config>
+</network-security-config>

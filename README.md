@@ -32,6 +32,24 @@ Gradle はリポジトリーに同梱した wrapper（Gradle 9.7.0）を使う�
 
 CI（`.github/workflows/ci.yml`）は上記をまとめて実行する。
 
+## エミュレーターでの動作確認
+
+コンテナー内で API 36 のエミュレーターを動かせる（`/dev/kvm` が使える場合）。
+イメージが大きいので Dockerfile には含めず、必要になったときに入れる。
+
+```sh
+sudo chmod 666 /dev/kvm
+sdkmanager "emulator" "system-images;android-36;aosp_atd;x86_64"
+avdmanager create avd -n fad-api36 -k "system-images;android-36;aosp_atd;x86_64" -d pixel_6
+emulator -avd fad-api36 -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect &
+adb wait-for-device
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n org.j96.flashairdownloader.debug/org.j96.flashairdownloader.ui.MainActivity
+```
+
+`-no-window` だと `adb exec-out screencap` は真っ黒になるので、画面の確認は
+`adb shell uiautomator dump /sdcard/ui.xml` の結果を読む。
+
 ## SDK バージョンの方針
 
 - `minSdk` / `targetSdk` = 36（Android 16）: 対応端末を決める値。設計どおり。

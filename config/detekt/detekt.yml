@@ -3,6 +3,9 @@
 style:
   MaxLineLength:
     maxLineLength: 120
+  UnusedPrivateMember:
+    # @Preview composables exist for the IDE to render; nothing calls them.
+    ignoreAnnotated: ['Preview']
   MagicNumber:
     # Bit masks, field indexes and the FAT date/time shifts read better as
     # literals right next to the spec they come from (docs/design.md 2.3, 2.4)
