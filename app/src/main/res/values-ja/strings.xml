@@ -5,6 +5,10 @@
     <string name="home_probing">カードに問い合わせています…</string>
     <string name="home_connected">接続済み</string>
     <string name="home_retry">再試行</string>
+    <string name="home_browse">カードを見る</string>
+
+    <string name="browse_up">上へ</string>
+    <string name="browse_empty">このフォルダーは空です。</string>
 
     <string name="card_ssid">SSID</string>
     <string name="card_firmware_version">ファームウェア</string>

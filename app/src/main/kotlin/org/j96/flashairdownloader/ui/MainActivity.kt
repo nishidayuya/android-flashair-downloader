@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import dagger.hilt.android.AndroidEntryPoint
-import org.j96.flashairdownloader.ui.home.HomeRoute
 import org.j96.flashairdownloader.ui.theme.FlashAirDownloaderTheme
 
 @AndroidEntryPoint
@@ -15,7 +14,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FlashAirDownloaderTheme {
-                HomeRoute()
+                FlashAirDownloaderApp()
             }
         }
     }

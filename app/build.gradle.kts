@@ -81,6 +81,7 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
 
     implementation(libs.hilt.android)
@@ -89,6 +90,7 @@ dependencies {
 
     implementation(libs.okhttp)
     implementation(libs.okhttp.coroutines)
+    implementation(libs.coil.compose)
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlin.test.junit5)

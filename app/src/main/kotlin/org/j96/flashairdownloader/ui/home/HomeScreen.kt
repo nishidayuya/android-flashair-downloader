@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,10 +32,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.j96.flashairdownloader.R
 import org.j96.flashairdownloader.domain.model.CardInfo
 import org.j96.flashairdownloader.domain.model.FlashAirFailure
+import org.j96.flashairdownloader.ui.messageRes
 import org.j96.flashairdownloader.ui.theme.FlashAirDownloaderTheme
 
 @Composable
-fun HomeRoute(viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeRoute(
+    onBrowseClick: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel(),
+) {
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     HomeScreen(
@@ -43,6 +48,7 @@ fun HomeRoute(viewModel: HomeViewModel = hiltViewModel()) {
         // The app never joins a network by itself in this phase: the user picks
         // the card's SSID in the system panel (docs/design.md 3.3).
         onOpenWifiSettings = { context.startActivity(Intent(Settings.Panel.ACTION_WIFI)) },
+        onBrowseClick = onBrowseClick,
     )
 }
 
@@ -52,6 +58,7 @@ fun HomeScreen(
     state: HomeUiState,
     onRetry: () -> Unit,
     onOpenWifiSettings: () -> Unit,
+    onBrowseClick: () -> Unit,
 ) {
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
@@ -68,6 +75,12 @@ fun HomeScreen(
                 onRetry = onRetry,
                 onOpenWifiSettings = onOpenWifiSettings,
             )
+            Button(
+                onClick = onBrowseClick,
+                enabled = state is HomeUiState.Connected,
+            ) {
+                Text(stringResource(R.string.home_browse))
+            }
         }
     }
 }
@@ -161,15 +174,6 @@ private fun LabeledValue(label: String, value: String) {
     }
 }
 
-private val FlashAirFailure.messageRes: Int
-    get() = when (this) {
-        FlashAirFailure.NOT_CONNECTED -> R.string.error_not_connected
-        FlashAirFailure.UNREACHABLE -> R.string.error_unreachable
-        FlashAirFailure.CARD_ERROR -> R.string.error_card
-        FlashAirFailure.STORAGE_ERROR -> R.string.error_storage
-        FlashAirFailure.UNKNOWN -> R.string.error_unknown
-    }
-
 @Preview(showBackground = true)
 @Composable
 private fun HomeScreenConnectedPreview() {
@@ -186,6 +190,7 @@ private fun HomeScreenConnectedPreview() {
             ),
             onRetry = {},
             onOpenWifiSettings = {},
+            onBrowseClick = {},
         )
     }
 }
@@ -194,6 +199,11 @@ private fun HomeScreenConnectedPreview() {
 @Composable
 private fun HomeScreenDisconnectedPreview() {
     FlashAirDownloaderTheme {
-        HomeScreen(state = HomeUiState.Disconnected, onRetry = {}, onOpenWifiSettings = {})
+        HomeScreen(
+            state = HomeUiState.Disconnected,
+            onRetry = {},
+            onOpenWifiSettings = {},
+            onBrowseClick = {},
+        )
     }
 }

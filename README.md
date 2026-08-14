@@ -50,6 +50,28 @@ adb shell am start -n org.j96.flashairdownloader.debug/org.j96.flashairdownloade
 `-no-window` だと `adb exec-out screencap` は真っ黒になるので、画面の確認は
 `adb shell uiautomator dump /sdcard/ui.xml` の結果を読む。
 
+### FlashAir スタブと組み合わせる
+
+`tools/flashair-stub.rb` が FlashAir 互換の HTTP サーバー（設計書 10 の
+「疑似実機」）で、`tools/fixtures/card` を SD カードの中身として配信する。
+
+```sh
+ruby tools/flashair-stub.rb --root tools/fixtures/card --port 8080 &
+```
+
+エミュレーターからは、ホストが `10.0.2.2` に見える。アプリが接続するのは
+`192.168.0.1`（平文 HTTP を許可しているのはこのアドレスだけ）なので、
+エミュレーター内で宛先を書き換える。
+
+```sh
+adb root
+adb shell iptables -t nat -A OUTPUT -p tcp -d 192.168.0.1 --dport 80 \
+  -j DNAT --to-destination 10.0.2.2:8080
+```
+
+これでアプリは実機と同じコードパスのまま、スタブのカードを読む。
+fixture にはカンマ入りのファイル名と非 ASCII のファイル名が入っている。
+
 ## SDK バージョンの方針
 
 - `minSdk` / `targetSdk` = 36（Android 16）: 対応端末を決める値。設計どおり。

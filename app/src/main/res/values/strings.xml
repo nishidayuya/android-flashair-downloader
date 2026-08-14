@@ -7,6 +7,10 @@
     <string name="home_probing">Contacting the card…</string>
     <string name="home_connected">Connected</string>
     <string name="home_retry">Retry</string>
+    <string name="home_browse">Browse the card</string>
+
+    <string name="browse_up">Up</string>
+    <string name="browse_empty">This folder is empty.</string>
 
     <string name="card_ssid">SSID</string>
     <string name="card_firmware_version">Firmware</string>
