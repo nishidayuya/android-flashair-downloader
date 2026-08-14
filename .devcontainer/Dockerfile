@@ -24,7 +24,9 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     kmod \
     chromium \
     chromium-driver \
-    wget
+    wget \
+    unzip \
+    openjdk-21-jdk-headless
 
 # Install mise
 RUN install -dm 755 /etc/apt/keyrings \
@@ -32,6 +34,34 @@ RUN install -dm 755 /etc/apt/keyrings \
     && echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.gpg arch=amd64] https://mise.jdx.dev/deb stable main" | tee /etc/apt/sources.list.d/mise.list \
     && apt-get update \
     && apt-get install -y mise
+
+# Android SDK.
+#
+# The command line tools ship as a plain zip whose build number has to be named
+# explicitly; https://developer.android.com/studio#command-line-tools-only lists
+# the current one. Everything else is installed with sdkmanager so that the
+# image can run "./gradlew assembleDebug" without downloading SDK components at
+# build time. The versions here have to stay in sync with compileSdk /
+# buildToolsVersion in gradle/libs.versions.toml.
+#
+# The whole tree is owned by vscode because sdkmanager writes into it (licenses,
+# packages) when it is run from inside the container.
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
+ARG ANDROID_CMDLINE_TOOLS_BUILD=15859902
+ARG ANDROID_PLATFORM="platforms;android-37.0"
+ARG ANDROID_BUILD_TOOLS="build-tools;37.0.0"
+RUN curl -fsSL -o /tmp/cmdline-tools.zip \
+      "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS_BUILD}_latest.zip" \
+    && unzip -q /tmp/cmdline-tools.zip -d /tmp/cmdline-tools \
+    && install -d "${ANDROID_HOME}/cmdline-tools" \
+    && mv /tmp/cmdline-tools/cmdline-tools "${ANDROID_HOME}/cmdline-tools/latest" \
+    && rm -rf /tmp/cmdline-tools.zip /tmp/cmdline-tools \
+    && chown -R vscode:vscode "${ANDROID_HOME}" \
+    && yes | sudo -u vscode "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null \
+    && sudo -u vscode "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" \
+      "platform-tools" "${ANDROID_PLATFORM}" "${ANDROID_BUILD_TOOLS}" > /dev/null
 
 USER vscode
 ENV MISE_DATA_DIR=/home/vscode/.local/share/mise

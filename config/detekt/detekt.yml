@@ -1,0 +1,23 @@
+# Overrides layered on top of detekt's default rule set
+# (buildUponDefaultConfig = true in the root build script).
+style:
+  MaxLineLength:
+    maxLineLength: 120
+  MagicNumber:
+    # Bit masks and FAT date/time shifts read better as literals next to the
+    # spec they come from (docs/design.md 2.3, 2.4).
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+
+complexity:
+  LongParameterList:
+    # Compose entry points take one lambda per user action.
+    ignoreAnnotated: ['Composable']
+  TooManyFunctions:
+    ignoreAnnotatedFunctions: ['Composable']
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Za-z0-9]*'
