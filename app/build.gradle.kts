@@ -83,7 +83,6 @@ dependencies {
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
-    implementation(libs.compose.ui.graphics)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons.extended)
@@ -97,15 +96,12 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
-    implementation(libs.androidx.documentfile)
-
     implementation(libs.okhttp)
     implementation(libs.okhttp.coroutines)
     implementation(libs.coil.compose)
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlin.test.junit5)
-    testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
     testRuntimeOnly(libs.junit.platform.launcher)
