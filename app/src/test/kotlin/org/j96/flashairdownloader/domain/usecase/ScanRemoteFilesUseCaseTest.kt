@@ -3,6 +3,7 @@ package org.j96.flashairdownloader.domain.usecase
 import kotlinx.coroutines.test.runTest
 import org.j96.flashairdownloader.data.flashair.FakeFlashAirCard
 import org.j96.flashairdownloader.data.flashair.FlashAirApi
+import org.j96.flashairdownloader.domain.model.ScanStopReason
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -58,7 +59,7 @@ class ScanRemoteFilesUseCaseTest {
         val result = scan("/DCIM", maxDepth = 1)
 
         assertEquals(listOf("/DCIM/TOP.JPG", "/DCIM/A/DEEP.JPG"), result.files.map { it.path })
-        assertEquals(ScanRemoteFilesUseCase.StopReason.DEPTH_LIMIT, result.stoppedEarly)
+        assertEquals(ScanStopReason.DEPTH_LIMIT, result.stoppedEarly)
     }
 
     @Test
@@ -73,7 +74,7 @@ class ScanRemoteFilesUseCaseTest {
         val result = scan("/DCIM", maxFiles = 2)
 
         assertEquals(2, result.files.size)
-        assertEquals(ScanRemoteFilesUseCase.StopReason.FILE_LIMIT, result.stoppedEarly)
+        assertEquals(ScanStopReason.FILE_LIMIT, result.stoppedEarly)
     }
 
     @Test

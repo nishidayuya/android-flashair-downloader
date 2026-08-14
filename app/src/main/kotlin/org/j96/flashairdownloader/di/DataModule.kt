@@ -5,6 +5,8 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import org.j96.flashairdownloader.data.flashair.FlashAirEndpointProvider
+import org.j96.flashairdownloader.data.storage.SafFileStore
+import org.j96.flashairdownloader.domain.storage.DownloadStore
 import org.j96.flashairdownloader.net.NetworkBoundEndpointProvider
 import javax.inject.Singleton
 
@@ -16,4 +18,8 @@ abstract class DataModule {
     abstract fun bindFlashAirEndpointProvider(
         provider: NetworkBoundEndpointProvider,
     ): FlashAirEndpointProvider
+
+    @Binds
+    @Singleton
+    abstract fun bindDownloadStore(store: SafFileStore): DownloadStore
 }

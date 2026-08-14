@@ -6,19 +6,27 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.j96.flashairdownloader.ui.browse.BrowseRoute
 import org.j96.flashairdownloader.ui.home.HomeRoute
+import org.j96.flashairdownloader.ui.sync.SyncRoute
 
 private const val ROUTE_HOME = "home"
 private const val ROUTE_BROWSE = "browse"
+private const val ROUTE_SYNC = "sync"
 
 @Composable
 fun FlashAirDownloaderApp() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = ROUTE_HOME) {
         composable(ROUTE_HOME) {
-            HomeRoute(onBrowseClick = { navController.navigate(ROUTE_BROWSE) })
+            HomeRoute(
+                onBrowseClick = { navController.navigate(ROUTE_BROWSE) },
+                onSyncStarted = { navController.navigate(ROUTE_SYNC) },
+            )
         }
         composable(ROUTE_BROWSE) {
             BrowseRoute(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(ROUTE_SYNC) {
+            SyncRoute(onDone = { navController.popBackStack() })
         }
     }
 }

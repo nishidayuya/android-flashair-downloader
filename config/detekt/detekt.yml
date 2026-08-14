@@ -14,10 +14,17 @@ style:
     ignoreLocalVariableDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
 
+  ReturnCount:
+    # Guard clauses ("if the card did not say X, give up on this line") are the
+    # house style for parsing and for resolving document trees.
+    max: 4
+
 complexity:
   LongParameterList:
     # Compose entry points take one lambda per user action.
     ignoreAnnotated: ['Composable']
+    # An injected constructor lists its dependencies; that is not a smell.
+    constructorThreshold: 12
   TooManyFunctions:
     ignoreAnnotatedFunctions: ['Composable']
 

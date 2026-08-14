@@ -1,8 +1,14 @@
 package org.j96.flashairdownloader.ui.home
 
+import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.provider.Settings
+import android.text.format.DateUtils
 import android.text.format.Formatter
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,10 +45,36 @@ import org.j96.flashairdownloader.ui.theme.FlashAirDownloaderTheme
 @Composable
 fun HomeRoute(
     onBrowseClick: () -> Unit,
+    onSyncStarted: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val pickDestination = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocumentTree(),
+    ) { treeUri ->
+        if (treeUri != null) {
+            // Without this the grant is gone as soon as the process dies
+            // (docs/design.md 3.4).
+            context.contentResolver.takePersistableUriPermission(
+                treeUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+            )
+            viewModel.setDestination(treeUri.toString())
+        }
+    }
+
+    val startSync = {
+        viewModel.startSync()
+        onSyncStarted()
+    }
+    // The foreground service needs a notification to show, so the permission is
+    // asked for at the moment it is needed (docs/design.md 3.5).
+    val requestNotifications = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { startSync() }
+
     HomeScreen(
         state = state,
         onRetry = viewModel::retry,
@@ -49,6 +82,16 @@ fun HomeRoute(
         // the card's SSID in the system panel (docs/design.md 3.3).
         onOpenWifiSettings = { context.startActivity(Intent(Settings.Panel.ACTION_WIFI)) },
         onBrowseClick = onBrowseClick,
+        onChooseDestination = {
+            // Every stock Android build ships a document picker, but a stripped
+            // down one may not, and that must not take the app down with it.
+            try {
+                pickDestination.launch(null)
+            } catch (_: ActivityNotFoundException) {
+                Toast.makeText(context, R.string.error_storage, Toast.LENGTH_LONG).show()
+            }
+        },
+        onStartSync = { requestNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) },
     )
 }
 
@@ -59,6 +102,8 @@ fun HomeScreen(
     onRetry: () -> Unit,
     onOpenWifiSettings: () -> Unit,
     onBrowseClick: () -> Unit,
+    onChooseDestination: () -> Unit,
+    onStartSync: () -> Unit,
 ) {
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
@@ -71,15 +116,24 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ConnectionCard(
-                state = state,
+                connection = state.connection,
                 onRetry = onRetry,
                 onOpenWifiSettings = onOpenWifiSettings,
             )
-            Button(
-                onClick = onBrowseClick,
-                enabled = state is HomeUiState.Connected,
-            ) {
-                Text(stringResource(R.string.home_browse))
+            DestinationCard(
+                state = state,
+                onChooseDestination = onChooseDestination,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = onStartSync, enabled = state.canStartSync) {
+                    Text(stringResource(R.string.home_start_sync))
+                }
+                OutlinedButton(
+                    onClick = onBrowseClick,
+                    enabled = state.connection is ConnectionState.Connected,
+                ) {
+                    Text(stringResource(R.string.home_browse))
+                }
             }
         }
     }
@@ -87,7 +141,7 @@ fun HomeScreen(
 
 @Composable
 private fun ConnectionCard(
-    state: HomeUiState,
+    connection: ConnectionState,
     onRetry: () -> Unit,
     onOpenWifiSettings: () -> Unit,
 ) {
@@ -98,8 +152,8 @@ private fun ConnectionCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            when (state) {
-                HomeUiState.Disconnected -> {
+            when (connection) {
+                ConnectionState.Disconnected -> {
                     Text(
                         text = stringResource(R.string.home_disconnected),
                         style = MaterialTheme.typography.bodyLarge,
@@ -109,7 +163,7 @@ private fun ConnectionCard(
                     }
                 }
 
-                HomeUiState.Probing -> Row(
+                ConnectionState.Probing -> Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -117,18 +171,18 @@ private fun ConnectionCard(
                     Text(stringResource(R.string.home_probing))
                 }
 
-                is HomeUiState.Connected -> CardInfoRows(state.card)
+                is ConnectionState.Connected -> CardInfoRows(connection.card)
 
-                is HomeUiState.Failed -> {
+                is ConnectionState.Failed -> {
                     Text(
-                        text = stringResource(state.failure.messageRes),
+                        text = stringResource(connection.failure.messageRes),
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedButton(onClick = onRetry) {
                             Text(stringResource(R.string.home_retry))
                         }
-                        if (state.failure == FlashAirFailure.NOT_CONNECTED) {
+                        if (connection.failure == FlashAirFailure.NOT_CONNECTED) {
                             OutlinedButton(onClick = onOpenWifiSettings) {
                                 Text(stringResource(R.string.home_open_wifi_settings))
                             }
@@ -139,6 +193,37 @@ private fun ConnectionCard(
         }
     }
 }
+
+@Composable
+private fun DestinationCard(state: HomeUiState, onChooseDestination: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            LabeledValue(
+                label = stringResource(R.string.home_destination),
+                value = state.destinationUri?.let(::destinationLabel)
+                    ?: stringResource(R.string.home_destination_missing),
+            )
+            LabeledValue(
+                label = stringResource(R.string.home_last_sync),
+                value = state.lastSyncEpoch
+                    ?.let { DateUtils.getRelativeTimeSpanString(it * MILLIS_PER_SECOND).toString() }
+                    ?: stringResource(R.string.home_never_synced),
+            )
+            OutlinedButton(onClick = onChooseDestination) {
+                Text(stringResource(R.string.home_choose_destination))
+            }
+        }
+    }
+}
+
+/** The document tree URI as something a person can recognise. */
+private fun destinationLabel(treeUri: String): String =
+    treeUri.substringAfterLast("%3A").ifEmpty { treeUri }.substringAfterLast('/')
 
 @Composable
 private fun CardInfoRows(card: CardInfo) {
@@ -170,27 +255,39 @@ private fun LabeledValue(label: String, value: String) {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(text = label, style = MaterialTheme.typography.labelLarge)
-        Text(text = value, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
+
+private const val MILLIS_PER_SECOND = 1_000L
 
 @Preview(showBackground = true)
 @Composable
 private fun HomeScreenConnectedPreview() {
     FlashAirDownloaderTheme {
         HomeScreen(
-            state = HomeUiState.Connected(
-                CardInfo(
-                    id = "0123456789ABCDEF0123456789ABCDEF",
-                    ssid = "flashair_ABCDEF",
-                    firmwareVersion = "F19BAW3AW2.00.00",
-                    freeBytes = 15_000_000_000,
-                    totalBytes = 31_000_000_000,
+            state = HomeUiState(
+                connection = ConnectionState.Connected(
+                    CardInfo(
+                        id = "0123456789ABCDEF0123456789ABCDEF",
+                        ssid = "flashair_ABCDEF",
+                        firmwareVersion = "F19BAW3AW2.00.00",
+                        freeBytes = 15_000_000_000,
+                        totalBytes = 31_000_000_000,
+                    ),
                 ),
+                destinationUri = "content://com.android.externalstorage.documents/tree/primary%3ADCIM",
             ),
             onRetry = {},
             onOpenWifiSettings = {},
             onBrowseClick = {},
+            onChooseDestination = {},
+            onStartSync = {},
         )
     }
 }
@@ -200,10 +297,12 @@ private fun HomeScreenConnectedPreview() {
 private fun HomeScreenDisconnectedPreview() {
     FlashAirDownloaderTheme {
         HomeScreen(
-            state = HomeUiState.Disconnected,
+            state = HomeUiState(connection = ConnectionState.Disconnected),
             onRetry = {},
             onOpenWifiSettings = {},
             onBrowseClick = {},
+            onChooseDestination = {},
+            onStartSync = {},
         )
     }
 }

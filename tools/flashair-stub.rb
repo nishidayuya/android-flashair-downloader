@@ -46,12 +46,13 @@ REASONS = {
 }.freeze
 
 class FlashAirStub
-  def initialize(root:, ssid:, firmware:, cid:, ranges:)
+  def initialize(root:, ssid:, firmware:, cid:, ranges:, throttle:)
     @root = File.expand_path(root)
     @ssid = ssid
     @firmware = firmware
     @cid = cid
     @ranges = ranges
+    @throttle = throttle
     @write_status = "1"
     raise ArgumentError, "no such directory: #{@root}" unless File.directory?(@root)
   end
@@ -179,7 +180,19 @@ class FlashAirStub
     connection.write("Content-Length: #{body.bytesize}\r\n")
     headers.each { |name, value| connection.write("#{name}: #{value}\r\n") }
     connection.write("Connection: close\r\n\r\n")
-    connection.write(body)
+    write_body(connection, body)
+  end
+
+  # A real card is slow. --throttle makes it slow here too, which is what makes
+  # cancelling and reconnecting testable at all.
+  def write_body(connection, body)
+    return connection.write(body) if @throttle.nil?
+
+    chunk = [@throttle / 10, 1].max
+    (0...body.bytesize).step(chunk) do |offset|
+      connection.write(body.byteslice(offset, chunk))
+      sleep(0.1)
+    end
   end
 end
 
@@ -188,6 +201,7 @@ options = {
   port: 8080,
   host: "0.0.0.0",
   ranges: false,
+  throttle: nil,
   ssid: "flashair_STUB",
   firmware: "F19BAW3AW2.00.00",
   cid: "0123456789ABCDEF0123456789ABCDEF",
@@ -198,6 +212,7 @@ OptionParser.new do |parser|
   parser.on("--port PORT", Integer)
   parser.on("--host HOST")
   parser.on("--ranges", "answer Range requests with 206 instead of ignoring them")
+  parser.on("--throttle BYTES_PER_SECOND", Integer, "send file bodies at this rate")
   parser.on("--ssid SSID")
   parser.on("--firmware VERSION")
   parser.on("--cid CID")
@@ -209,6 +224,7 @@ stub = FlashAirStub.new(
   firmware: options[:firmware],
   cid: options[:cid],
   ranges: options[:ranges],
+  throttle: options[:throttle],
 )
 
 server = TCPServer.new(options[:host], options[:port])

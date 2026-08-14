@@ -2,6 +2,7 @@ package org.j96.flashairdownloader.domain.usecase
 
 import org.j96.flashairdownloader.data.flashair.FlashAirApi
 import org.j96.flashairdownloader.data.flashair.model.FlashAirEntry
+import org.j96.flashairdownloader.domain.model.ScanStopReason
 import javax.inject.Inject
 
 /**
@@ -15,13 +16,11 @@ import javax.inject.Inject
 class ScanRemoteFilesUseCase @Inject constructor(
     private val api: FlashAirApi,
 ) {
-    enum class StopReason { DEPTH_LIMIT, FILE_LIMIT }
-
     data class Scan(
         val files: List<FlashAirEntry>,
         val directoriesVisited: Int,
         /** Set when a limit cut the walk short, so the UI can say so. */
-        val stoppedEarly: StopReason? = null,
+        val stoppedEarly: ScanStopReason? = null,
     )
 
     suspend operator fun invoke(
@@ -35,10 +34,10 @@ class ScanRemoteFilesUseCase @Inject constructor(
         // Depth first in listing order, so the result reads like the tree does.
         val pending = ArrayDeque<Pair<String, Int>>()
         pending.addLast(root to 0)
-        var stoppedEarly: StopReason? = null
+        var stoppedEarly: ScanStopReason? = null
         var directoriesVisited = 0
 
-        while (pending.isNotEmpty() && stoppedEarly != StopReason.FILE_LIMIT) {
+        while (pending.isNotEmpty() && stoppedEarly != ScanStopReason.FILE_LIMIT) {
             val (directory, depth) = pending.removeLast()
             // A card that lists a directory as its own descendant would loop.
             if (!visited.add(directory)) continue
@@ -50,9 +49,9 @@ class ScanRemoteFilesUseCase @Inject constructor(
 
             val subdirectories = entries.filter { it.isDirectory }
             when {
-                files.size >= maxFiles -> stoppedEarly = StopReason.FILE_LIMIT
+                files.size >= maxFiles -> stoppedEarly = ScanStopReason.FILE_LIMIT
                 subdirectories.isEmpty() -> Unit
-                depth + 1 > maxDepth -> stoppedEarly = stoppedEarly ?: StopReason.DEPTH_LIMIT
+                depth + 1 > maxDepth -> stoppedEarly = stoppedEarly ?: ScanStopReason.DEPTH_LIMIT
                 // Reversed, because the stack pops the last one first.
                 else -> subdirectories.asReversed().forEach { pending.addLast(it.path to depth + 1) }
             }

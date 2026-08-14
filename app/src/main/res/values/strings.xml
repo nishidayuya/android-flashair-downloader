@@ -8,6 +8,12 @@
     <string name="home_connected">Connected</string>
     <string name="home_retry">Retry</string>
     <string name="home_browse">Browse the card</string>
+    <string name="home_start_sync">Start sync</string>
+    <string name="home_destination">Destination</string>
+    <string name="home_choose_destination">Choose destination folder</string>
+    <string name="home_destination_missing">Not chosen yet</string>
+    <string name="home_last_sync">Last sync</string>
+    <string name="home_never_synced">Never</string>
 
     <string name="browse_up">Up</string>
     <string name="browse_empty">This folder is empty.</string>
@@ -18,9 +24,30 @@
     <string name="card_free_space_value">%1$s of %2$s</string>
     <string name="value_unknown">Unknown</string>
 
+    <string name="sync_title">Sync</string>
+    <string name="sync_notification_channel">Sync progress</string>
+    <string name="sync_notification_title">Downloading from FlashAir</string>
+    <string name="sync_probing">Contacting the card…</string>
+    <string name="sync_scanning">Looking for files…</string>
+    <string name="sync_scanning_count">%1$d files found</string>
+    <string name="sync_waiting_for_network">Waiting for the card\'s Wi-Fi…</string>
+    <string name="sync_files_progress">%1$d of %2$d files</string>
+    <string name="sync_bytes_progress">%1$s of %2$s</string>
+    <string name="sync_speed">%1$s/s</string>
+    <string name="sync_unchanged">Unchanged: %1$d</string>
+    <string name="sync_cancel">Cancel</string>
+    <string name="sync_close">Close</string>
+    <string name="sync_result_done">Downloaded %1$d files</string>
+    <string name="sync_result_partial">Downloaded %1$d files, %2$d failed</string>
+    <string name="sync_result_failed">The sync could not be completed</string>
+    <string name="sync_result_cancelled">Sync cancelled</string>
+    <string name="sync_failures_title">Failed files</string>
+    <string name="sync_stopped_early_depth">Stopped at the folder depth limit; deeper folders were not read.</string>
+    <string name="sync_stopped_early_files">Stopped at the file count limit; not every file was read.</string>
+
     <string name="error_not_connected">Connect to the FlashAir\'s Wi-Fi network.</string>
     <string name="error_unreachable">The card did not answer. Check the host in the settings.</string>
     <string name="error_card">The card reported an error.</string>
-    <string name="error_storage">Writing to the destination folder failed.</string>
+    <string name="error_storage">Choose a destination folder the app is allowed to write to.</string>
     <string name="error_unknown">Something went wrong.</string>
 </resources>

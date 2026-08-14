@@ -13,54 +13,95 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import org.j96.flashairdownloader.data.local.DownloadRecordDao
+import org.j96.flashairdownloader.data.local.SettingsDataStore
 import org.j96.flashairdownloader.domain.model.CardInfo
 import org.j96.flashairdownloader.domain.model.FlashAirFailure
+import org.j96.flashairdownloader.domain.model.SyncProgress
 import org.j96.flashairdownloader.domain.usecase.ProbeCardUseCase
 import org.j96.flashairdownloader.net.FlashAirNetworkProvider
+import org.j96.flashairdownloader.sync.SyncController
 import java.io.IOException
 import javax.inject.Inject
 
-sealed interface HomeUiState {
+sealed interface ConnectionState {
     /** No Wi-Fi without internet access is bound, so there is nothing to talk to. */
-    data object Disconnected : HomeUiState
+    data object Disconnected : ConnectionState
 
-    data object Probing : HomeUiState
+    data object Probing : ConnectionState
 
-    data class Connected(val card: CardInfo) : HomeUiState
+    data class Connected(val card: CardInfo) : ConnectionState
 
-    data class Failed(val failure: FlashAirFailure) : HomeUiState
+    data class Failed(val failure: FlashAirFailure) : ConnectionState
+}
+
+data class HomeUiState(
+    val connection: ConnectionState = ConnectionState.Probing,
+    val destinationUri: String? = null,
+    val lastSyncEpoch: Long? = null,
+    val syncState: SyncProgress.State = SyncProgress.State.IDLE,
+) {
+    val canStartSync: Boolean
+        get() = connection is ConnectionState.Connected && destinationUri != null && !syncState.isRunning
 }
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     networkProvider: FlashAirNetworkProvider,
     private val probeCard: ProbeCardUseCase,
+    private val settings: SettingsDataStore,
+    private val records: DownloadRecordDao,
+    private val syncController: SyncController,
 ) : ViewModel() {
     private val retries = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val uiState: StateFlow<HomeUiState> =
+    private val connection: StateFlow<ConnectionState> =
         combine(networkProvider.network, retries) { network, _ -> network }
             .flatMapLatest { network ->
-                if (network == null) {
-                    flowOf(HomeUiState.Disconnected)
-                } else {
-                    probe()
-                }
+                if (network == null) flowOf(ConnectionState.Disconnected) else probe()
             }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_GRACE_MILLIS), HomeUiState.Probing)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_GRACE_MILLIS), ConnectionState.Probing)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val uiState: StateFlow<HomeUiState> = combine(
+        connection,
+        connection.flatMapLatest { state ->
+            if (state is ConnectionState.Connected) {
+                records.observeLastDownloadEpoch(state.card.id)
+            } else {
+                flowOf(null)
+            }
+        },
+        settings.destinationTreeUri,
+        syncController.progress,
+    ) { connection, lastSyncEpoch, destinationUri, progress ->
+        HomeUiState(
+            connection = connection,
+            destinationUri = destinationUri,
+            lastSyncEpoch = lastSyncEpoch,
+            syncState = progress.state,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_GRACE_MILLIS), HomeUiState())
 
     fun retry() = retries.update { it + 1 }
 
+    fun startSync() = syncController.start()
+
+    fun setDestination(treeUri: String) {
+        viewModelScope.launch { settings.setDestinationTreeUri(treeUri) }
+    }
+
     private fun probe() = flow {
-        emit(HomeUiState.Probing)
+        emit(ConnectionState.Probing)
         emit(
             try {
-                HomeUiState.Connected(probeCard())
+                ConnectionState.Connected(probeCard())
             } catch (failure: IOException) {
                 // Everything the card or the network can do wrong is an
                 // IOException; anything else would be a bug worth crashing on.
-                HomeUiState.Failed(FlashAirFailure.of(failure))
+                ConnectionState.Failed(FlashAirFailure.of(failure))
             },
         )
     }
