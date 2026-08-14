@@ -20,6 +20,9 @@ ktlint_function_naming_ignore_when_annotated_with = Composable
 # Composable signatures are kept one-parameter-per-line even when they would fit
 # on a single line, so that the trailing `content` lambda stays visible.
 ktlint_standard_function-signature = disabled
+# Constructor parameters go one per line with a trailing comma, so that adding
+# one shows up as a single added line in a diff.
+ktlint_class_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = 1
 
 [*.{xml,yml,yaml,json}]
 indent_size = 2

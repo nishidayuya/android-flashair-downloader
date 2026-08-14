@@ -4,9 +4,11 @@ style:
   MaxLineLength:
     maxLineLength: 120
   MagicNumber:
-    # Bit masks and FAT date/time shifts read better as literals next to the
-    # spec they come from (docs/design.md 2.3, 2.4).
+    # Bit masks, field indexes and the FAT date/time shifts read better as
+    # literals right next to the spec they come from (docs/design.md 2.3, 2.4)
+    # than as a wall of one-use constants.
     ignorePropertyDeclaration: true
+    ignoreLocalVariableDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
 
 complexity:
