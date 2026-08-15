@@ -1,5 +1,9 @@
 # FlashAir Downloader for Android
 
+<img src="docs/images/main_activity.png"
+     alt="ホーム画面。カードの SSID・ファームウェア・空き容量と、保存先・前回の同期、同期開始ボタンが並んでいる"
+     width="270">
+
 TOSHIBA FlashAir（無線 LAN 内蔵 SD カード）から HTTP 経由でファイルを
 ダウンロードする Android アプリケーション。
 
