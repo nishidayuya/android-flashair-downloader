@@ -76,8 +76,10 @@ adb shell am start -n org.j96.flashairdownloader.debug/org.j96.flashairdownloade
 
 `tools/flashair-stub.rb` が FlashAir 互換の HTTP サーバー（設計書 10 の
 「疑似実機」）で、`tools/fixtures/card` を SD カードの中身として配信する。
+Sinatra を使うので、初回だけ gem を入れる（Ruby を使うのはこのスタブだけ）。
 
 ```sh
+bundle install
 ruby tools/flashair-stub.rb --root tools/fixtures/card --port 8080 &
 ```
 

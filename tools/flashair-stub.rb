@@ -8,7 +8,8 @@
 # API the app uses: command.cgi ops 100/101/102/104/108/120/140, plain GETs for
 # file contents, and thumbnail.cgi.
 #
-#   ruby tools/flashair-stub.rb --root tools/fixtures/card --port 8080
+#   bundle install
+#   bundle exec ruby tools/flashair-stub.rb --root tools/fixtures/card --port 8080
 #
 # Deliberate quirks, because the app has to cope with them on a real card:
 #
@@ -18,99 +19,96 @@
 #   unverified on real cards, and the app must not depend on it
 # - op=102 (write status) clears itself once read
 
+require "bundler/setup"
+
 require "base64"
 require "optparse"
-require "socket"
-require "uri"
+require "sinatra/base"
 
-# FAT attribute bits (docs/design.md 2.3).
-ATTRIBUTE_DIRECTORY = 0x10
-ATTRIBUTE_ARCHIVE = 0x20
+class FlashAirStub < Sinatra::Base
+  # FAT attribute bits (docs/design.md 2.3).
+  ATTRIBUTE_DIRECTORY = 0x10
+  ATTRIBUTE_ARCHIVE = 0x20
 
-SECTOR_SIZE = 512
-TOTAL_SECTORS = 31_088_640
+  SECTOR_SIZE = 512
+  TOTAL_SECTORS = 31_088_640
 
-# A 1x1 pixel JPEG, returned for every thumbnail.cgi request.
-THUMBNAIL_JPEG = Base64.decode64(<<~BASE64)
-  /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a
-  HBwcJC4nICIsIxwcKDcpLDA1NDQ0Hyc5PTgyPDUzNDP/wAALCAABAAEBAREA/8QAFAABAQAAAAAA
-  AAAAAAAAAAAAAAr/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/a
-  AAwDAQACEQMRAD8AmQA//9k=
-BASE64
+  # A 1x1 pixel JPEG, returned for every thumbnail.cgi request.
+  THUMBNAIL_JPEG = Base64.decode64(<<~BASE64)
+    /9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a
+    HBwcJC4nICIsIxwcKDcpLDA1NDQ0Hyc5PTgyPDUzNDP/wAALCAABAAEBAREA/8QAFAABAQAAAAAA
+    AAAAAAAAAAAAAAr/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/a
+    AAwDAQACEQMRAD8AmQA//9k=
+  BASE64
 
-REASONS = {
-  200 => "OK",
-  206 => "Partial Content",
-  400 => "Bad Request",
-  404 => "Not Found",
-}.freeze
+  # How often a throttled body is written out, in slices per second.
+  THROTTLE_SLICES_PER_SECOND = 10
 
-class FlashAirStub
-  def initialize(root:, ssid:, firmware:, cid:, ranges:, throttle:)
-    @root = File.expand_path(root)
-    @ssid = ssid
-    @firmware = firmware
-    @cid = cid
-    @ranges = ranges
-    @throttle = throttle
-    @write_status = "1"
-    raise ArgumentError, "no such directory: #{@root}" unless File.directory?(@root)
+  configure do
+    disable :protection
+    # Modular apps log nothing by default, and seeing the requests the app makes
+    # is half the point of running the stub.
+    enable :logging
+    set :card_root, File.expand_path("fixtures/card", __dir__)
+    set :ssid, "flashair_STUB"
+    set :firmware, "F19BAW3AW2.00.00"
+    set :cid, "0123456789ABCDEF0123456789ABCDEF"
+    set :ranges, false
+    set :throttle, nil
+    set :write_status, "1"
   end
 
-  def serve(connection)
-    request_line = connection.gets
-    return if request_line.nil?
+  get "/command.cgi" do
+    content_type "text/plain"
+    answer = case params["op"]
+             when "100" then listing(params["DIR"] || "/")
+             when "101" then entry_count(params["DIR"] || "/")
+             when "102" then take_write_status
+             when "104" then settings.ssid
+             when "108" then settings.firmware
+             when "120" then settings.cid
+             when "140" then free_space
+             end
+    halt 404 if answer.nil?
+    answer
+  end
 
-    headers = read_headers(connection)
-    warn("> #{request_line.strip}")
-    method, target, = request_line.split(" ")
-    return respond(connection, 400, "") unless method == "GET"
+  get "/thumbnail.cgi" do
+    # The query string is the file path itself, not a name=value pair.
+    path = resolve(Rack::Utils.unescape_path(request.query_string))
+    halt 404 unless path && File.file?(path) && File.extname(path).downcase.match?(/\.jpe?g\z/)
 
-    uri = URI.parse(target)
-    case URI.decode_www_form_component(uri.path)
-    when "/command.cgi" then command(connection, uri.query)
-    when "/thumbnail.cgi" then thumbnail(connection, uri.query)
-    else file(connection, URI.decode_www_form_component(uri.path), headers)
-    end
+    content_type "image/jpeg"
+    send_body(THUMBNAIL_JPEG)
+  end
+
+  get "/*" do
+    path = resolve(Rack::Utils.unescape_path(request.path_info))
+    halt 404 unless path && File.file?(path)
+
+    content_type "application/octet-stream"
+    content = File.binread(path)
+    range = settings.ranges ? request.env["HTTP_RANGE"].to_s.match(/bytes=(\d+)-/) : nil
+    halt 200, send_body(content) if range.nil?
+
+    offset = range[1].to_i
+    status 206
+    headers "Content-Range" => "bytes #{offset}-#{content.bytesize - 1}/#{content.bytesize}"
+    send_body(content.byteslice(offset..) || "")
   end
 
   private
 
-  def read_headers(connection)
-    headers = {}
-    while (line = connection.gets) && line != "\r\n"
-      name, value = line.split(":", 2)
-      headers[name.to_s.strip.downcase] = value.to_s.strip
-    end
-    headers
-  end
-
-  # Resolves a request path to a path inside the root, refusing to escape it.
+  # Resolves a request path to a path inside the card root, refusing to escape it.
   def resolve(path)
-    full = File.expand_path(File.join(@root, path.to_s.sub(%r{\A/}, "")))
-    return nil unless full == @root || full.start_with?("#{@root}/")
-
-    full
+    root = settings.card_root
+    full = File.expand_path(File.join(root, path.to_s.sub(%r{\A/}, "")))
+    full if full == root || full.start_with?("#{root}/")
   end
 
   def fat_date_time(time)
-    date = ((time.year - 1980) << 9) | (time.month << 5) | time.day
-    clock = (time.hour << 11) | (time.min << 5) | (time.sec / 2)
-    [date, clock]
-  end
-
-  def command(connection, query)
-    params = URI.decode_www_form(query.to_s).to_h
-    body = case params["op"]
-           when "100" then listing(params["DIR"] || "/")
-           when "101" then entry_count(params["DIR"] || "/")
-           when "102" then take_write_status
-           when "104" then @ssid
-           when "108" then @firmware
-           when "120" then @cid
-           when "140" then free_space
-           end
-    body ? respond(connection, 200, body) : respond(connection, 404, "")
+    [((time.year - 1980) << 9) | (time.month << 5) | time.day,
+     (time.hour << 11) | (time.min << 5) | (time.sec / 2)]
   end
 
   def listing(directory)
@@ -123,88 +121,47 @@ class FlashAirStub
       stat = File.stat(File.join(full, name))
       date, clock = fat_date_time(stat.mtime)
       attribute = stat.directory? ? ATTRIBUTE_DIRECTORY : ATTRIBUTE_ARCHIVE
-      size = stat.directory? ? 0 : stat.size
-      "#{reported},#{name},#{size},#{attribute},#{date},#{clock}"
+      "#{reported},#{name},#{stat.directory? ? 0 : stat.size},#{attribute},#{date},#{clock}"
     end
-    (["WLANSD_FILELIST"] + lines).join("\r\n") + "\r\n"
+    "#{(["WLANSD_FILELIST"] + lines).join("\r\n")}\r\n"
   end
 
   def entry_count(directory)
     full = resolve(directory)
-    full && File.directory?(full) ? Dir.children(full).size.to_s : nil
+    Dir.children(full).size.to_s if full && File.directory?(full)
   end
 
   def take_write_status
-    status = @write_status
-    @write_status = "0"
-    status
+    settings.write_status.tap { settings.set(:write_status, "0") }
   end
 
   def free_space
-    used = Dir.glob(File.join(@root, "**/*")).sum { |path| File.file?(path) ? File.size(path) : 0 }
+    used = Dir.glob(File.join(settings.card_root, "**/*")).sum { |p| File.file?(p) ? File.size(p) : 0 }
     "#{TOTAL_SECTORS - (used / SECTOR_SIZE)}/#{TOTAL_SECTORS},#{SECTOR_SIZE}"
   end
 
-  def thumbnail(connection, query)
-    # The query string is the file path itself, not a name=value pair.
-    path = resolve(URI.decode_www_form_component(query.to_s))
-    if path && File.file?(path) && File.extname(path).downcase.match?(/\.jpe?g\z/)
-      respond(connection, 200, THUMBNAIL_JPEG, content_type: "image/jpeg")
-    else
-      respond(connection, 404, "")
-    end
-  end
+  # A real card is slow. --throttle makes this one slow too, which is what makes
+  # cancelling and reconnecting testable at all. Content-Length is set by hand
+  # because a streamed body would otherwise be sent chunked, and the card is
+  # not that modern.
+  def send_body(content)
+    return content if settings.throttle.nil?
 
-  def file(connection, path, headers)
-    full = resolve(path)
-    return respond(connection, 404, "") unless full && File.file?(full)
-
-    content = File.binread(full)
-    match = @ranges ? headers["range"].to_s.match(/bytes=(\d+)-/) : nil
-    if match
-      offset = match[1].to_i
-      tail = content.byteslice(offset..) || ""
-      respond(connection, 206, tail,
-              content_type: "application/octet-stream",
-              headers: {
-                "Content-Range" => "bytes #{offset}-#{content.bytesize - 1}/#{content.bytesize}",
-              })
-    else
-      respond(connection, 200, content, content_type: "application/octet-stream")
-    end
-  end
-
-  def respond(connection, code, body, content_type: "text/plain", headers: {})
-    connection.write("HTTP/1.1 #{code} #{REASONS.fetch(code)}\r\n")
-    connection.write("Content-Type: #{content_type}\r\n")
-    connection.write("Content-Length: #{body.bytesize}\r\n")
-    headers.each { |name, value| connection.write("#{name}: #{value}\r\n") }
-    connection.write("Connection: close\r\n\r\n")
-    write_body(connection, body)
-  end
-
-  # A real card is slow. --throttle makes it slow here too, which is what makes
-  # cancelling and reconnecting testable at all.
-  def write_body(connection, body)
-    return connection.write(body) if @throttle.nil?
-
-    chunk = [@throttle / 10, 1].max
-    (0...body.bytesize).step(chunk) do |offset|
-      connection.write(body.byteslice(offset, chunk))
-      sleep(0.1)
+    headers "Content-Length" => content.bytesize.to_s
+    slice = [settings.throttle / THROTTLE_SLICES_PER_SECOND, 1].max
+    stream do |out|
+      (0...content.bytesize).step(slice) do |offset|
+        out << content.byteslice(offset, slice)
+        sleep(1.0 / THROTTLE_SLICES_PER_SECOND)
+      end
     end
   end
 end
 
 options = {
-  root: File.expand_path("fixtures/card", __dir__),
+  root: nil,
   port: 8080,
   host: "0.0.0.0",
-  ranges: false,
-  throttle: nil,
-  ssid: "flashair_STUB",
-  firmware: "F19BAW3AW2.00.00",
-  cid: "0123456789ABCDEF0123456789ABCDEF",
 }
 
 OptionParser.new do |parser|
@@ -218,26 +175,11 @@ OptionParser.new do |parser|
   parser.on("--cid CID")
 end.parse!(into: options)
 
-stub = FlashAirStub.new(
-  root: options[:root],
-  ssid: options[:ssid],
-  firmware: options[:firmware],
-  cid: options[:cid],
-  ranges: options[:ranges],
-  throttle: options[:throttle],
-)
-
-server = TCPServer.new(options[:host], options[:port])
-warn("FlashAir stub serving #{File.expand_path(options[:root])} " \
-     "on http://#{options[:host]}:#{options[:port]}")
-
-loop do
-  connection = server.accept
-  Thread.new(connection) do |socket|
-    stub.serve(socket)
-  rescue StandardError => e
-    warn("! #{e.class}: #{e.message}")
-  ensure
-    socket.close
-  end
+FlashAirStub.set(:card_root, File.expand_path(options[:root])) if options[:root]
+%i[ssid firmware cid ranges throttle].each do |name|
+  FlashAirStub.set(name, options[name]) if options.key?(name)
 end
+
+abort("no such directory: #{FlashAirStub.card_root}") unless File.directory?(FlashAirStub.card_root)
+
+FlashAirStub.run!(port: options[:port], bind: options[:host])
