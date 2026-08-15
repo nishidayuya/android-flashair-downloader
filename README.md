@@ -38,14 +38,19 @@ Gradle はリポジトリーに同梱した wrapper（Gradle 9.7.0）を使う�
 ## ビルドと検査
 
 ```sh
-./gradlew assembleDebug   # デバッグ APK
-./gradlew test            # JVM 単体テスト（JUnit 5）
-./gradlew ktlintCheck     # ktlint
-./gradlew detekt          # detekt
-./gradlew lint            # Android Lint
+./gradlew assembleDebug              # デバッグ APK
+./gradlew test                       # JVM 単体テスト（JUnit 5）
+./gradlew connectedDebugAndroidTest  # 計装テスト（要エミュレーターまたは実機）
+./gradlew ktlintCheck                # ktlint
+./gradlew detekt                     # detekt
+./gradlew lint                       # Android Lint
 ```
 
-CI（`.github/workflows/ci.yml`）は上記をまとめて実行する。
+計装テストは Room・DataStore・Compose 画面など、JVM では動かせない部分を
+実機（エミュレーター）上で確認する。事前に `tools/setup_emulator.sh` で
+エミュレーターを起動しておく。
+
+CI（`.github/workflows/ci.yml`）は計装テスト以外をまとめて実行する。
 
 ## エミュレーターでの動作確認
 
