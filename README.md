@@ -46,19 +46,21 @@ CI（`.github/workflows/ci.yml`）は上記をまとめて実行する。
 ## エミュレーターでの動作確認
 
 コンテナー内で API 36 のエミュレーターを動かせる（`/dev/kvm` が使える場合）。
-イメージが大きいので Dockerfile には含めず、必要になったときに入れる。
+エミュレーターとシステムイメージで約 2.8GB あるので Dockerfile には含めず、
+必要になったときに `tools/setup_emulator.sh` で入れる。
 
 ```sh
-sudo chmod 666 /dev/kvm
-sdkmanager "emulator" "system-images;android-36;aosp_atd;x86_64"
-avdmanager create avd -n fad-api36 -k "system-images;android-36;aosp_atd;x86_64" -d pixel_6
-emulator -avd fad-api36 -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect &
-adb wait-for-device
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+tools/setup_emulator.sh                  # 導入・AVD 作成・起動（何度実行してもよい）
+tools/setup_emulator.sh --no-start       # 導入と AVD 作成だけ
+tools/setup_emulator.sh --route-to-stub  # 後述のスタブへ 192.168.0.1 を向ける
+```
+
+```sh
+./gradlew installDebug
 adb shell am start -n org.j96.flashairdownloader.debug/org.j96.flashairdownloader.ui.MainActivity
 ```
 
-`-no-window` だと `adb exec-out screencap` は真っ黒になるので、画面の確認は
+`-no-window` で動かすので、画面の確認は
 `adb shell uiautomator dump /sdcard/ui.xml` の結果を読む。
 
 ### FlashAir スタブと組み合わせる
@@ -74,8 +76,8 @@ ruby tools/flashair-stub.rb --root tools/fixtures/card --port 8080 &
 `--ranges` を付けると Range リクエストに 206 で答える（既定は実機同様に無視）。
 
 エミュレーターからは、ホストが `10.0.2.2` に見える。アプリが接続するのは
-`192.168.0.1`（平文 HTTP を許可しているのはこのアドレスだけ）なので、
-エミュレーター内で宛先を書き換える。
+既定で `192.168.0.1` なので、エミュレーター内で宛先を書き換える。これは
+`tools/setup_emulator.sh --route-to-stub` がやってくれる（中身は次のとおり）。
 
 ```sh
 adb root
