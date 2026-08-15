@@ -96,7 +96,14 @@ class SyncForegroundService : Service() {
      */
     private fun acquireLocks() {
         val wifiManager = getSystemService(WifiManager::class.java)
-        wifiLock = wifiManager?.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, WIFI_LOCK_TAG)
+        // WIFI_MODE_FULL_LOW_LATENCY rather than the deprecated
+        // WIFI_MODE_FULL_HIGH_PERF. What the lock still buys on a modern
+        // Android is that Wi-Fi power saving stays off while a transfer runs;
+        // the low latency part of it only applies while the app is in the
+        // foreground with the screen on, and the lock falls back to the high
+        // performance behaviour the rest of the time, which is the case that
+        // matters here.
+        wifiLock = wifiManager?.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, WIFI_LOCK_TAG)
             ?.also { it.acquire() }
         val powerManager = getSystemService(PowerManager::class.java)
         wakeLock = powerManager?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
