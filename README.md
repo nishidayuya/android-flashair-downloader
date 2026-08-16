@@ -52,6 +52,59 @@ Gradle はリポジトリーに同梱した wrapper（Gradle 9.7.0）を使う�
 
 CI（`.github/workflows/ci.yml`）は計装テスト以外をまとめて実行する。
 
+## ビルド済み APK の配布
+
+main への push と pull request のたびに、CI がビルドした APK を GitHub Pages
+へ置く。端末のブラウザーから開けばそのままインストールできる。
+
+```
+https://nishidayuya.github.io/android-flashair-downloader/                     一覧
+https://nishidayuya.github.io/android-flashair-downloader/apk/<commit>/        コミットごと
+```
+
+pull request には「このコミットの APK はこちら」というコメントが URL と
+QR コードつきで付く。公開するのは次の 2 つ。
+
+- `app-debug.apk`: debug キー署名。アプリケーション ID が `.debug` なので
+  リリース版と並べて入れられる。CI の実行ごとに鍵が変わるため、上書き
+  インストールはできない（先に削除する）
+- `app-release.apk`: 後述の Secrets に登録した鍵で署名。鍵が無ければ作らない
+
+### 初期設定
+
+1. **Pages を有効にする**: リポジトリーの Settings → Pages で、Source を
+   「Deploy from a branch」、ブランチを `gh-pages` / `/ (root)` にする。
+   ブランチは最初の CI 実行時に作られる。
+2. **署名鍵を Secrets に登録する**（省略可。省略すると debug 版のみ公開）
+
+```sh
+keytool -genkeypair -keystore release.jks -alias flashair \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -storepass "$PASSWORD" -keypass "$PASSWORD" -dname "CN=..."
+base64 -w0 release.jks   # これを RELEASE_KEYSTORE_BASE64 に貼る
+```
+
+| Secret | 内容 |
+|---|---|
+| `RELEASE_KEYSTORE_BASE64` | キーストアを base64 にしたもの |
+| `RELEASE_KEYSTORE_PASSWORD` | キーストアのパスワード |
+| `RELEASE_KEY_ALIAS` | 鍵のエイリアス |
+| `RELEASE_KEY_PASSWORD` | 鍵のパスワード |
+
+いまの keytool が作る PKCS12 形式では、鍵のパスワードはキーストアの
+パスワードと同じでなければならない。
+
+鍵はローカルビルドには影響しない。環境変数（`RELEASE_KEYSTORE_FILE` ほか）が
+無ければ、これまでどおり `assembleRelease` は未署名の APK を作る。
+
+### 制限
+
+- fork からの pull request では `GITHUB_TOKEN` が読み取り専用になるため、
+  Pages への公開もコメントも行わない。APK は Actions のアーティファクトから
+  取得できる。
+- 公開するのは最新 20 コミットぶん（`KEEP_BUILDS`）。`gh-pages` ブランチは
+  毎回 1 コミットに作り直すので、古い APK がリポジトリーに残り続けない。
+
 ## エミュレーターでの動作確認
 
 コンテナー内で API 36 のエミュレーターを動かせる（`/dev/kvm` が使える場合）。

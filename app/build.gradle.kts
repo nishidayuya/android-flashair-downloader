@@ -30,11 +30,31 @@ android {
         localeFilters += listOf("en", "ja")
     }
 
+    /**
+     * The release signing key comes from the environment, so that CI can sign
+     * with a key kept in repository secrets while a plain local build stays
+     * exactly as it was: unsigned. Everything has to be there or the config is
+     * left out entirely -- a half-configured key would fail the build for
+     * anyone who just wants to compile.
+     */
+    val releaseKeystore = releaseSigningFromEnvironment(providers)
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore.storeFile)
+                storePassword = releaseKeystore.storePassword
+                keyAlias = releaseKeystore.keyAlias
+                keyPassword = releaseKeystore.keyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
         }
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -116,4 +136,22 @@ dependencies {
     androidTestImplementation(libs.okhttp.mockwebserver)
     // Provides the activity the Compose test rule launches its content in.
     debugImplementation(libs.compose.ui.test.manifest)
+}
+
+/** The release signing key, when the environment carries a complete one. */
+data class ReleaseKeystore(
+    val storeFile: String,
+    val storePassword: String,
+    val keyAlias: String,
+    val keyPassword: String,
+)
+
+fun releaseSigningFromEnvironment(providers: ProviderFactory): ReleaseKeystore? {
+    fun environment(name: String) = providers.environmentVariable(name).orNull?.takeIf { it.isNotBlank() }
+    return ReleaseKeystore(
+        storeFile = environment("RELEASE_KEYSTORE_FILE") ?: return null,
+        storePassword = environment("RELEASE_KEYSTORE_PASSWORD") ?: return null,
+        keyAlias = environment("RELEASE_KEY_ALIAS") ?: return null,
+        keyPassword = environment("RELEASE_KEY_PASSWORD") ?: return null,
+    )
 }
