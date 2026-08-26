@@ -59,9 +59,17 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
-          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
-          RELEASE_KEYSTORE_FILE="$RUNNER_TEMP/release.jks" ./gradlew assembleRelease
-          rm -f "$RUNNER_TEMP/release.jks"
+          keystore="$RUNNER_TEMP/release.jks"
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 -d > "$keystore"
+          # Load the key the way the Gradle plugin will, before spending two
+          # minutes on R8 only to fail inside packageRelease.
+          if ! KEYSTORE_FILE="$keystore" java tools/CheckKeystore.java; then
+            rm -f "$keystore"
+            echo "::error::The release keystore and its passwords do not work together. A PKCS12 keystore -- what keytool creates by default -- keeps the private key under the store password, so RELEASE_KEY_PASSWORD has to equal RELEASE_KEYSTORE_PASSWORD; also check RELEASE_KEY_ALIAS, and that no secret picked up a stray newline."
+            exit 1
+          fi
+          RELEASE_KEYSTORE_FILE="$keystore" ./gradlew assembleRelease
+          rm -f "$keystore"
 
       - name: Collect the APKs
         run: |

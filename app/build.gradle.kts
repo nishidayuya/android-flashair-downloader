@@ -149,7 +149,11 @@ data class ReleaseKeystore(
 )
 
 fun releaseSigningFromEnvironment(providers: ProviderFactory): ReleaseKeystore? {
-    fun environment(name: String) = providers.environmentVariable(name).orNull?.takeIf { it.isNotBlank() }
+    // Trailing newlines come with pasted secrets and with `gh secret set < file`,
+    // and a password with one is just a wrong password with nothing to see.
+    fun environment(name: String) =
+        providers.environmentVariable(name).orNull?.trim('\r', '\n')?.takeIf { it.isNotBlank() }
+
     return ReleaseKeystore(
         storeFile = environment("RELEASE_KEYSTORE_FILE") ?: return null,
         storePassword = environment("RELEASE_KEYSTORE_PASSWORD") ?: return null,
