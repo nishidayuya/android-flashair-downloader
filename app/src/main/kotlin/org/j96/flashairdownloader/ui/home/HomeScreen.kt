@@ -207,6 +207,15 @@ private fun ConnectionCard(
                         text = stringResource(connection.failure.messageRes),
                         style = MaterialTheme.typography.bodyLarge,
                     )
+                    // Debug builds only, and deliberately unlocalised: this is
+                    // for whoever is diagnosing, not for the user.
+                    connection.detail?.let { detail ->
+                        Text(
+                            text = detail,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OutlinedButton(onClick = onRetry) {
                             Text(stringResource(R.string.home_retry))

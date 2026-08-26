@@ -1,5 +1,6 @@
 package org.j96.flashairdownloader.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.j96.flashairdownloader.BuildConfig
 import org.j96.flashairdownloader.data.local.DownloadRecordDao
 import org.j96.flashairdownloader.data.local.SettingsDataStore
 import org.j96.flashairdownloader.domain.model.CardInfo
@@ -33,7 +35,16 @@ sealed interface ConnectionState {
 
     data class Connected(val card: CardInfo) : ConnectionState
 
-    data class Failed(val failure: FlashAirFailure) : ConnectionState
+    /**
+     * @param detail what actually went wrong, for debug builds only: the
+     *   message names a cause the user can act on, which the exception
+     *   rarely does, but without the exception a failure like this one
+     *   cannot be told apart from the other reasons a card stays silent.
+     */
+    data class Failed(
+        val failure: FlashAirFailure,
+        val detail: String? = null,
+    ) : ConnectionState
 }
 
 data class HomeUiState(
@@ -48,7 +59,7 @@ data class HomeUiState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    networkProvider: FlashAirNetworkProvider,
+    private val networkProvider: FlashAirNetworkProvider,
     private val probeCard: ProbeCardUseCase,
     private val settings: SettingsDataStore,
     private val records: DownloadRecordDao,
@@ -101,12 +112,23 @@ class HomeViewModel @Inject constructor(
             } catch (failure: IOException) {
                 // Everything the card or the network can do wrong is an
                 // IOException; anything else would be a bug worth crashing on.
-                ConnectionState.Failed(FlashAirFailure.of(failure))
+                val bound = networkProvider.describeCurrentNetwork()
+                Log.w(TAG, "probing the card failed over $bound", failure)
+                ConnectionState.Failed(
+                    failure = FlashAirFailure.of(failure),
+                    detail = if (BuildConfig.DEBUG) {
+                        "${failure.javaClass.simpleName}: ${failure.message}\n$bound"
+                    } else {
+                        null
+                    },
+                )
             },
         )
     }
 
     private companion object {
+        const val TAG = "FlashAirHome"
+
         /** Keeps the probe alive across a configuration change. */
         const val SUBSCRIPTION_GRACE_MILLIS = 5_000L
     }

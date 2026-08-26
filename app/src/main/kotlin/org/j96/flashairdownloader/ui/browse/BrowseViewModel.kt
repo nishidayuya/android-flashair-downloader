@@ -1,5 +1,6 @@
 package org.j96.flashairdownloader.ui.browse
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -82,9 +83,14 @@ class BrowseViewModel @Inject constructor(
             val state = try {
                 _uiState.value.copy(entries = listDirectory(directory), isLoading = false)
             } catch (failure: IOException) {
+                Log.w(TAG, "listing $directory failed", failure)
                 _uiState.value.copy(isLoading = false, failure = FlashAirFailure.of(failure))
             }
             _uiState.value = state
         }
+    }
+
+    private companion object {
+        const val TAG = "FlashAirBrowse"
     }
 }

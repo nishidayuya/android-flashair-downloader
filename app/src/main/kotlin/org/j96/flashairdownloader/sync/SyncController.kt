@@ -1,6 +1,7 @@
 package org.j96.flashairdownloader.sync
 
 import android.content.Context
+import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -68,6 +69,7 @@ class SyncController @Inject constructor(
                 _progress.update { it.copy(state = SyncProgress.State.CANCELLED, currentFile = null) }
                 throw cancellation
             } catch (failure: IOException) {
+                Log.w(TAG, "the sync could not go on", failure)
                 _progress.update {
                     it.copy(
                         state = SyncProgress.State.FAILED,
@@ -182,6 +184,7 @@ class SyncController @Inject constructor(
     }
 
     private companion object {
+        const val TAG = "FlashAirSync"
         const val MILLIS_PER_SECOND = 1_000L
     }
 }

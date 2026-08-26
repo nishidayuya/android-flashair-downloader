@@ -68,4 +68,18 @@ class FlashAirNetworkProvider @Inject constructor(
         connectivityManager.requestNetwork(request, callback)
         awaitClose { connectivityManager.unregisterNetworkCallback(callback) }
     }.stateIn(scope, SharingStarted.Eagerly, null)
+
+    /**
+     * What the app is actually bound to, for the failure details on screen and
+     * in the log: which interface, which addresses, which routes. A request
+     * that fails while this says the wrong network is a different problem from
+     * one that fails while it says the right one.
+     */
+    fun describeCurrentNetwork(): String {
+        val network = network.value ?: return "no network"
+        val properties = connectivityManager.getLinkProperties(network) ?: return "$network (no link properties)"
+        val addresses = properties.linkAddresses.joinToString(",")
+        val routes = properties.routes.joinToString(",") { it.destination.toString() }
+        return "${properties.interfaceName} addresses=[$addresses] routes=[$routes]"
+    }
 }
