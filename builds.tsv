@@ -1,0 +1,10 @@
+1787844817	778516aa0de37a0777c6dc1c2b87de1a8a2ac436	Merge pull request #5 from nishidayuya/ci_github_release
+1787843200	97eabd33748db25fca099f436ef5d3c21d83a5cb	ci: attach the signed release APK to the GitHub release
+1787842814	42f06bfcb74d1e2839a5e22dc4cf01324ffaa483	chore(main): release 1.0.0
+1787842430	2668e01f113e42f477da7282190c42833fcc56f1	Merge pull request #3 from nishidayuya/ci_install_release_please
+1787841907	17b267a3f705853bd40e54bdf9df0f77b3d44e33	ci: release with release-please-action
+1787841402	1f1ea23488d9f6abb48d7707dd88b54f06647f77	Merge pull request #2 from nishidayuya/feat_implement
+1787837259	aec5e47671e7d58d11227da7980c8e71bf5e8430	refactor!: rename the package to io.github.nishidayuya.flashairdownloader
+1787835073	1ae081a861abe431766679793fb3ef03f0b27b1a	ci: fail the signed build with something a person can act on
+1787752552	af88758a2550ded4301c0ba909ce1244dab9644c	fix: say what actually went wrong when the card stays silent
+1787741209	4649860aaa0e6ddc4597a7f7583e35f08fd6b253	ci: publish every build's APK to GitHub Pages
