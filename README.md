@@ -119,7 +119,7 @@ tools/setup_emulator.sh --route-to-stub  # 後述のスタブへ 192.168.0.1 を
 
 ```sh
 ./gradlew installDebug
-adb shell am start -n org.j96.flashairdownloader.debug/org.j96.flashairdownloader.ui.MainActivity
+adb shell am start -n io.github.nishidayuya.flashairdownloader.debug/io.github.nishidayuya.flashairdownloader.ui.MainActivity
 ```
 
 `-no-window` で動かすので、画面の確認は

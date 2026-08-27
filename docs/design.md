@@ -317,7 +317,7 @@ SDK バージョン:
 `:core:network` / `:core:data` / `:feature:*` に切り出す。
 
 ```
-org.j96.flashairdownloader
+io.github.nishidayuya.flashairdownloader
 ├── di/                      Hilt モジュール
 ├── net/
 │   ├── FlashAirNetworkProvider.kt   NetworkCallback、StateFlow<Network?>

@@ -114,7 +114,7 @@ cat <<EOF
 
 Next:
   ./gradlew installDebug
-  $adb shell am start -n org.j96.flashairdownloader.debug/org.j96.flashairdownloader.ui.MainActivity
+  $adb shell am start -n io.github.nishidayuya.flashairdownloader.debug/io.github.nishidayuya.flashairdownloader.ui.MainActivity
 
 The screen is not rendered anywhere, so read it with:
   $adb shell uiautomator dump /sdcard/ui.xml && $adb shell cat /sdcard/ui.xml

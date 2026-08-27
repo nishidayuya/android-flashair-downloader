@@ -13,12 +13,12 @@ room {
 }
 
 android {
-    namespace = "org.j96.flashairdownloader"
+    namespace = "io.github.nishidayuya.flashairdownloader"
     compileSdk = libs.versions.compileSdk.get().toInt()
     buildToolsVersion = libs.versions.buildTools.get()
 
     defaultConfig {
-        applicationId = "org.j96.flashairdownloader"
+        applicationId = "io.github.nishidayuya.flashairdownloader"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
