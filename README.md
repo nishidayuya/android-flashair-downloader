@@ -105,6 +105,27 @@ base64 -w0 release.jks   # これを RELEASE_KEYSTORE_BASE64 に貼る
 - 公開するのは最新 20 コミットぶん（`KEEP_BUILDS`）。`gh-pages` ブランチは
   毎回 1 コミットに作り直すので、古い APK がリポジトリーに残り続けない。
 
+## リリース
+
+リリースは release-please（`.github/workflows/release-please.yml`）が進める。
+main への push ごとに Conventional Commits を読んでリリース pull request を
+更新し、それをマージするとバージョンを決めて `v0.2.0` のようなタグと
+GitHub Release を作る。
+
+`v` で始まるタグができると `.github/workflows/release-apk.yml` が署名済みの
+リリース APK をビルドし、`flashair-downloader-<バージョン>.apk` という名前で
+その Release に添付する。署名鍵は Pages への公開と同じ Secrets を使う
+（[初期設定](#初期設定)）。鍵が無ければ、インストールできない APK を配らない
+ようにジョブを失敗させる。
+
+release-please が作るタグは既定の `GITHUB_TOKEN` で push されるが、この
+トークンによる push は workflow を起動しない。そのため release-please.yml が
+release-apk.yml を直接呼び出す。タグを手で push したときは、タグ push の
+トリガーで同じ workflow が動き、Release がまだ無ければ作ってから添付する。
+
+APK 内の `versionCode` / `versionName`（`app/build.gradle.kts`）はまだタグと
+連動していない。
+
 ## エミュレーターでの動作確認
 
 コンテナー内で API 36 のエミュレーターを動かせる（`/dev/kvm` が使える場合）。
