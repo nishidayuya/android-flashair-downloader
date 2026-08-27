@@ -1,0 +1,93 @@
+name: release-apk
+
+on:
+  push:
+    tags:
+      # The tags release-please creates, and any hand-made tag of the same shape.
+      - 'v*'
+  # release-please tags the release with the default GITHUB_TOKEN, and a push
+  # made with that token never starts a workflow, so the release-please
+  # workflow calls this one instead of waiting for a tag push that never comes.
+  workflow_call:
+    inputs:
+      tag:
+        description: The tag of the release to attach the APK to.
+        required: true
+        type: string
+
+# To upload the asset to the release -- and to create the release itself, when
+# the tag was pushed by hand rather than by release-please.
+permissions:
+  contents: write
+
+concurrency:
+  group: release-apk-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: >-
+            platforms;android-37.0
+            build-tools;37.0.0
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # The checks already ran on the commit this tag points at, on main, so
+      # this build only has to produce the APK.
+      - name: Build the signed release APK
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          if [ -z "$RELEASE_KEYSTORE_BASE64" ]; then
+            echo "::error::There is no release keystore, and an APK nobody can install is not worth releasing. Set the RELEASE_KEYSTORE_BASE64, RELEASE_KEYSTORE_PASSWORD, RELEASE_KEY_ALIAS and RELEASE_KEY_PASSWORD secrets; the README describes them under 'ビルド済み APK の配布'."
+            exit 1
+          fi
+          keystore="$RUNNER_TEMP/release.jks"
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 -d > "$keystore"
+          # Load the key the way the Gradle plugin will, before spending two
+          # minutes on R8 only to fail inside packageRelease.
+          if ! KEYSTORE_FILE="$keystore" java tools/CheckKeystore.java; then
+            rm -f "$keystore"
+            echo "::error::The release keystore and its passwords do not work together. A PKCS12 keystore -- what keytool creates by default -- keeps the private key under the store password, so RELEASE_KEY_PASSWORD has to equal RELEASE_KEYSTORE_PASSWORD; also check RELEASE_KEY_ALIAS, and that no secret picked up a stray newline."
+            exit 1
+          fi
+          RELEASE_KEYSTORE_FILE="$keystore" ./gradlew assembleRelease
+          rm -f "$keystore"
+
+      - name: Upload the APK to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          # Named after the release rather than after the build type: this is
+          # the file people download and keep next to older versions.
+          apk="flashair-downloader-${TAG#v}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "$apk"
+
+          # release-please creates the release together with the tag; a tag
+          # pushed by hand has none yet.
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --verify-tag --title "$TAG" --generate-notes
+          fi
+          # --clobber so that re-running the workflow replaces the asset rather
+          # than failing on the one the previous run left behind.
+          gh release upload "$TAG" "$apk" --clobber
+
+          url="$(gh release view "$TAG" --json url --jq .url)"
+          echo "Uploaded \`$apk\` to [$TAG]($url)." >> "$GITHUB_STEP_SUMMARY"
