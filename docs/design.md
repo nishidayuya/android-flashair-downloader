@@ -258,8 +258,16 @@ SSID をスキャンして表示する機能を付けるなら `ACCESS_FINE_LOCA
 - WorkManager は採用しない。ネットワークのバインド状態と密結合で、
   OS 都合の再スケジュールと相性が悪いため
 - Wi-Fi が切れたら即座に一時停止し、`onAvailable` で再開する
-- 長時間ダウンロード中に Wi-Fi がスリープしないよう `WifiLock`（`WIFI_MODE_FULL_HIGH_PERF`）
+- 長時間ダウンロード中に Wi-Fi がスリープしないよう `WifiLock`（`WIFI_MODE_FULL_LOW_LATENCY`）
   と `PARTIAL_WAKE_LOCK` を取得する。取得・解放は必ず `try/finally` で対にする
+  - `WIFI_MODE_FULL_HIGH_PERF` は API 29 で非推奨になったのでこちらを使う。
+    低遅延化が効くのは「前景かつ画面 ON」のときだけで、それ以外は
+    `WIFI_MODE_FULL_HIGH_PERF` 相当に落ちる。このアプリの主戦場（画面 OFF での
+    転送）では後者の挙動になるが、そこで欲しいのは Wi-Fi 省電力（PSM）の抑止
+    なので実効は変わらない
+  - 接続の維持は WifiLock の役割ではない（`WIFI_MODE_FULL` は非機能として
+    非推奨）。画面 OFF でも Wi-Fi は繋がったままで、CPU を止めないのは
+    `PARTIAL_WAKE_LOCK` の担当
 
 ### 3.6 必要なパーミッション
 
@@ -309,7 +317,7 @@ SDK バージョン:
 `:core:network` / `:core:data` / `:feature:*` に切り出す。
 
 ```
-org.j96.flashairdownloader
+io.github.nishidayuya.flashairdownloader
 ├── di/                      Hilt モジュール
 ├── net/
 │   ├── FlashAirNetworkProvider.kt   NetworkCallback、StateFlow<Network?>

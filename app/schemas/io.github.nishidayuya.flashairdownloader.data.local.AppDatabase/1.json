@@ -1,0 +1,60 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "74356b1bd8da37b4b6c01c5f68af49a1",
+    "entities": [
+      {
+        "tableName": "DownloadRecordEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cardId` TEXT NOT NULL, `path` TEXT NOT NULL, `size` INTEGER NOT NULL, `modifiedAtEpoch` INTEGER, `downloadedAtEpoch` INTEGER NOT NULL, `localUri` TEXT, PRIMARY KEY(`cardId`, `path`))",
+        "fields": [
+          {
+            "fieldPath": "cardId",
+            "columnName": "cardId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "path",
+            "columnName": "path",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "size",
+            "columnName": "size",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modifiedAtEpoch",
+            "columnName": "modifiedAtEpoch",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "downloadedAtEpoch",
+            "columnName": "downloadedAtEpoch",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localUri",
+            "columnName": "localUri",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "cardId",
+            "path"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '74356b1bd8da37b4b6c01c5f68af49a1')"
+    ]
+  }
+}

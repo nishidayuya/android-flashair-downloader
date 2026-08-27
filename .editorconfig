@@ -1,0 +1,32 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.{kt,kts}]
+indent_size = 4
+max_line_length = 120
+# The "ktlint_official" style enforces wrapping rules that fight both the
+# Compose DSL and Gradle's Kotlin DSL (every `libs.plugins.a.b` chain becomes a
+# violation), so the less opinionated IntelliJ IDEA style is used instead.
+ktlint_code_style = intellij_idea
+# @Composable functions are PascalCase by convention.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+# Composable signatures are kept one-parameter-per-line even when they would fit
+# on a single line, so that the trailing `content` lambda stays visible.
+ktlint_standard_function-signature = disabled
+# Injected constructors are written one parameter per line with a trailing comma
+# so that adding one is a one line diff, while small value classes stay on a
+# single line. The rule cannot express both, so it is left to the author.
+ktlint_standard_class-signature = disabled
+
+[*.{xml,yml,yaml,json}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false

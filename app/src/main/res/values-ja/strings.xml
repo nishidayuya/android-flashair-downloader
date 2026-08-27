@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="navigate_back">戻る</string>
+
+    <string name="home_disconnected">FlashAir の Wi-Fi に接続してください。</string>
+    <string name="home_open_wifi_settings">Wi-Fi 設定を開く</string>
+    <string name="home_probing">カードに問い合わせています…</string>
+    <string name="home_connected">接続済み</string>
+    <string name="home_retry">再試行</string>
+    <string name="home_browse">カードを見る</string>
+    <string name="home_start_sync">同期開始</string>
+    <string name="home_destination">保存先</string>
+    <string name="home_choose_destination">保存先フォルダーを選ぶ</string>
+    <string name="home_destination_missing">未選択</string>
+    <string name="home_last_sync">前回の同期</string>
+    <string name="home_never_synced">なし</string>
+
+    <string name="browse_up">上へ</string>
+    <string name="browse_empty">このフォルダーは空です。</string>
+
+    <string name="card_ssid">SSID</string>
+    <string name="card_firmware_version">ファームウェア</string>
+    <string name="card_free_space">空き容量</string>
+    <string name="card_free_space_value">%1$s / %2$s</string>
+    <string name="value_unknown">不明</string>
+
+    <string name="sync_title">同期</string>
+    <string name="sync_notification_channel">同期の進捗</string>
+    <string name="sync_notification_title">FlashAir からダウンロード中</string>
+    <string name="sync_probing">カードに問い合わせています…</string>
+    <string name="sync_scanning">ファイルを探しています…</string>
+    <plurals name="sync_scanning_count">
+        <item quantity="other">%1$d 件見つかりました</item>
+    </plurals>
+    <string name="sync_waiting_for_network">FlashAir の Wi-Fi を待っています…</string>
+    <string name="sync_files_progress">ファイル: %1$d / %2$d</string>
+    <string name="sync_bytes_progress">%1$s / %2$s</string>
+    <string name="sync_speed">%1$s/秒</string>
+    <string name="sync_already_present">保存先にすでにあった: %1$d</string>
+    <string name="sync_unchanged">変化なし: %1$d</string>
+    <string name="sync_cancel">キャンセル</string>
+    <string name="sync_close">閉じる</string>
+    <plurals name="sync_result_done">
+        <item quantity="other">%1$d 件をダウンロードしました</item>
+    </plurals>
+    <string name="sync_result_partial">%1$d 件をダウンロード、%2$d 件が失敗しました</string>
+    <string name="sync_result_failed">同期を完了できませんでした</string>
+    <string name="sync_result_cancelled">同期をキャンセルしました</string>
+    <string name="sync_failures_title">失敗したファイル</string>
+    <string name="sync_stopped_early_depth">フォルダーの深さ上限で打ち切りました。深い階層は読んでいません。</string>
+    <string name="sync_stopped_early_files">ファイル数の上限で打ち切りました。すべてのファイルは読んでいません。</string>
+
+    <string name="settings_title">設定</string>
+    <string name="settings_host">カードのアドレス</string>
+    <string name="settings_host_help">既定は 192.168.0.1。インターネットに出られない Wi-Fi ではホスト名を解決できないことが多いです。</string>
+    <string name="settings_target_directory">カード内のフォルダー</string>
+    <string name="settings_target_directory_help">同期の起点。例: /DCIM</string>
+    <string name="settings_extension_filter">拡張子</string>
+    <string name="settings_extension_filter_help">カンマ区切り。例: jpg, mov。空ならすべてのファイル。</string>
+    <string name="settings_destination">保存先フォルダー</string>
+    <string name="settings_parallel_downloads">同時ダウンロード数</string>
+    <string name="settings_parallel_downloads_help">カードの HTTP サーバーは同時接続に弱いので、1 が安全です。</string>
+    <string name="settings_media_store">ギャラリーに登録する</string>
+    <string name="settings_media_store_help">保存した写真・動画をすぐにシステムへ登録します。</string>
+
+    <string name="history_title">履歴</string>
+    <string name="history_downloaded">ダウンロード済み</string>
+    <string name="history_empty">このカードからはまだ何もダウンロードしていません。</string>
+    <string name="history_reset">記録をリセット</string>
+    <string name="history_reset_explanation">このカードからダウンロードした記録を消します。保存したファイルはそのまま残り、次の同期では保存先にあるファイルを再ダウンロードせずに記録し直します。</string>
+
+    <string name="error_not_connected">FlashAir の Wi-Fi に接続してください。</string>
+    <string name="error_unreachable">カードから応答がありません。設定のアドレスを確認してください。</string>
+    <string name="error_card">カードがエラーを返しました。</string>
+    <string name="error_storage">アプリが書き込める保存先フォルダーを選んでください。</string>
+    <string name="error_unknown">エラーが発生しました。</string>
+</resources>

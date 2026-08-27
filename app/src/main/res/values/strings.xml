@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">FlashAir Downloader</string>
+    <string name="navigate_back">Back</string>
+
+    <string name="home_disconnected">Connect to the FlashAir\'s Wi-Fi network to get started.</string>
+    <string name="home_open_wifi_settings">Open Wi-Fi settings</string>
+    <string name="home_probing">Contacting the card…</string>
+    <string name="home_connected">Connected</string>
+    <string name="home_retry">Retry</string>
+    <string name="home_browse">Browse the card</string>
+    <string name="home_start_sync">Start sync</string>
+    <string name="home_destination">Destination</string>
+    <string name="home_choose_destination">Choose destination folder</string>
+    <string name="home_destination_missing">Not chosen yet</string>
+    <string name="home_last_sync">Last sync</string>
+    <string name="home_never_synced">Never</string>
+
+    <string name="browse_up">Up</string>
+    <string name="browse_empty">This folder is empty.</string>
+
+    <string name="card_ssid">SSID</string>
+    <string name="card_firmware_version">Firmware</string>
+    <string name="card_free_space">Free space</string>
+    <string name="card_free_space_value">%1$s of %2$s</string>
+    <string name="value_unknown">Unknown</string>
+
+    <string name="sync_title">Sync</string>
+    <string name="sync_notification_channel">Sync progress</string>
+    <string name="sync_notification_title">Downloading from FlashAir</string>
+    <string name="sync_probing">Contacting the card…</string>
+    <string name="sync_scanning">Looking for files…</string>
+    <plurals name="sync_scanning_count">
+        <item quantity="one">%1$d file found</item>
+        <item quantity="other">%1$d files found</item>
+    </plurals>
+    <string name="sync_waiting_for_network">Waiting for the card\'s Wi-Fi…</string>
+    <string name="sync_files_progress">Files: %1$d / %2$d</string>
+    <string name="sync_bytes_progress">%1$s of %2$s</string>
+    <string name="sync_speed">%1$s/s</string>
+    <string name="sync_already_present">Already in the destination: %1$d</string>
+    <string name="sync_unchanged">Unchanged: %1$d</string>
+    <string name="sync_cancel">Cancel</string>
+    <string name="sync_close">Close</string>
+    <plurals name="sync_result_done">
+        <item quantity="one">Downloaded %1$d file</item>
+        <item quantity="other">Downloaded %1$d files</item>
+    </plurals>
+    <string name="sync_result_partial">Downloaded %1$d, failed %2$d</string>
+    <string name="sync_result_failed">The sync could not be completed</string>
+    <string name="sync_result_cancelled">Sync cancelled</string>
+    <string name="sync_failures_title">Failed files</string>
+    <string name="sync_stopped_early_depth">Stopped at the folder depth limit; deeper folders were not read.</string>
+    <string name="sync_stopped_early_files">Stopped at the file count limit; not every file was read.</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_host">Card address</string>
+    <string name="settings_host_help">Default 192.168.0.1. A host name usually cannot be resolved on a network without internet access.</string>
+    <string name="settings_target_directory">Folder on the card</string>
+    <string name="settings_target_directory_help">Where a sync starts looking, for example /DCIM.</string>
+    <string name="settings_extension_filter">Extensions</string>
+    <string name="settings_extension_filter_help">Comma separated, for example jpg, mov. Empty means every file.</string>
+    <string name="settings_destination">Destination folder</string>
+    <string name="settings_parallel_downloads">Files at once</string>
+    <string name="settings_parallel_downloads_help">The card\'s Wi-Fi copes with very few connections; 1 is the safe choice.</string>
+    <string name="settings_media_store">Add to the gallery</string>
+    <string name="settings_media_store_help">Ask the system to index saved photos and videos right away.</string>
+
+    <string name="history_title">History</string>
+    <string name="history_downloaded">Downloaded</string>
+    <string name="history_empty">Nothing has been downloaded from this card yet.</string>
+    <string name="history_reset">Reset records</string>
+    <string name="history_reset_explanation">Forget what was downloaded from this card. The saved files stay where they are, and the next sync recognises the ones that are already in the destination.</string>
+
+    <string name="error_not_connected">Connect to the FlashAir\'s Wi-Fi network.</string>
+    <string name="error_unreachable">The card did not answer. Check the address in the settings.</string>
+    <string name="error_card">The card reported an error.</string>
+    <string name="error_storage">Choose a destination folder the app is allowed to write to.</string>
+    <string name="error_unknown">Something went wrong.</string>
+</resources>

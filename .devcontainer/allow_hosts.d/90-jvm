@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -eu
+
+# JVM / Android build tooling.
+#
+# - Maven Central hosts almost every third-party dependency (OkHttp, JUnit, ...).
+# - The Gradle Plugin Portal serves plugin markers resolved by `plugins { }`.
+# - services.gradle.org and downloads.gradle.org serve the Gradle distribution
+#   downloaded by the Gradle wrapper.
+# - dl.google.com / maven.google.com (Android Gradle Plugin, AndroidX, the
+#   Android SDK packages fetched by sdkmanager) are already covered by the
+#   Google IP ranges in 20-google, so they are not repeated here.
+cat <<EOF
+repo1.maven.org
+repo.maven.apache.org
+plugins.gradle.org
+plugins-artifacts.gradle.org
+services.gradle.org
+downloads.gradle.org
+EOF

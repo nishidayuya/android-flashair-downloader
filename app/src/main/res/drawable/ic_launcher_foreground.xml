@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A stylised SD card: the body with the notched top-left corner, plus three
+     "wireless" arcs standing for the FlashAir Wi-Fi. Drawn on the 108dp
+     adaptive-icon canvas, inside the 72dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,24 L68,24 A4,4 0 0,1 72,28 L72,80 A4,4 0 0,1 68,84 L40,84 A4,4 0 0,1 36,80 L36,36 Z" />
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M42,30 L46,30 L46,40 L42,40 Z M50,30 L54,30 L54,40 L50,40 Z M58,30 L62,30 L62,40 L58,40 Z" />
+    <path
+        android:strokeColor="#1565C0"
+        android:strokeWidth="4"
+        android:fillColor="#00000000"
+        android:strokeLineCap="round"
+        android:pathData="M48,68 A8,8 0 0,1 60,68" />
+    <path
+        android:strokeColor="#1565C0"
+        android:strokeWidth="4"
+        android:fillColor="#00000000"
+        android:strokeLineCap="round"
+        android:pathData="M44,60 A14,14 0 0,1 64,60" />
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M54,72 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+</vector>
